@@ -38,18 +38,20 @@ public:
         while (1) {
             // Si l'utilisateur veut stoper le programme
             if (machine.shouldQuit()) {
-                return;
+                break;
             }
+
 
             // Si aucun compte n'est ouvert
-            if (machine.isOpenAccount()) {
+            if (!machine.isOpenAccount()) {
                continue;
             }
+            logger() << "test" << std::endl;
 
             coin = machine.getCoin();
-            machine.updateOpenAccount(coin);
+            //machine.updateOpenAccount(coin);
 
-            /*
+
             switch (machine.getKeyState()) {       // lire la touche fonction
             case KEY_YES:
                 logger() << "La touche OUI a ete pressee." << std::endl;
@@ -65,7 +67,7 @@ public:
             default:
                 break;
             }
-            */
+
         }
     }
 
@@ -88,11 +90,11 @@ public:
         while (1) {
             // Si l'utilisateur veut stoper le programme
             if (machine.shouldQuit()) {
-                return;
+                break;
             }
 
             // Si aucun compte n'est ouvert
-            if (machine.isOpenAccount()) {
+            if (!machine.isOpenAccount()) {
                continue;
             }
 
