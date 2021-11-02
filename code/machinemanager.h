@@ -36,12 +36,6 @@ public:
         COIN coin;
 
         while (1) {
-            // Si l'utilisateur veut stoper le programme
-            if (machine.shouldQuit()) {
-                break;
-            }
-
-
             // Si aucun compte n'est ouvert
             if (!machine.isOpenAccount()) {
                continue;
@@ -49,6 +43,12 @@ public:
             logger() << "test" << std::endl;
 
             coin = machine.getCoin();
+
+            // Si l'utilisateur veut stoper le programme
+            if (machine.shouldQuit()) {
+                break;
+            }
+
             //machine.updateOpenAccount(coin);
 
 
@@ -88,18 +88,19 @@ public:
         // machine.resetKeyFunction()
 
         while (1) {
+
+
+
+            article = machine.getArticle();   // lecture du souhait du client
+
             // Si l'utilisateur veut stoper le programme
             if (machine.shouldQuit()) {
                 break;
             }
 
-            // Si aucun compte n'est ouvert
-            if (!machine.isOpenAccount()) {
-               continue;
-            }
-
-            article = machine.getArticle();   // lecture du souhait du client
             prixArticle = prixArticles[article];
+
+            machine.
 
             // Solde insufisant
             if (prixArticle > machine.getCreditOpenAccount()) {
@@ -119,7 +120,12 @@ public:
             logger() << "Article achete avec succes." << std::endl;
             logger() << "Solde restant: " << machine.getCreditOpenAccount() << std::endl;
 
-            // machine.ejectCoin(2);
+            // Rendre la monnaie si l'utilisateur n'a pas de compte
+            if (!machine.isOpenAccount()) {
+                bool optimalReturn = amountToReturn();
+
+                // machine.ejectCoin(2);
+            }
         }
     }
 
