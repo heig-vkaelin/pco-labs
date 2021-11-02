@@ -35,18 +35,21 @@ public:
     {
         COIN coin;
 
-        if (machine.shouldQuit()) {
-            return;
-        }
-
         while (1) {
+            // Si l'utilisateur veut stoper le programme
+            if (machine.shouldQuit()) {
+                return;
+            }
 
+            // Si aucun compte n'est ouvert
+            if (machine.isOpenAccount()) {
+               continue;
+            }
 
             coin = machine.getCoin();
+            machine.updateOpenAccount(coin);
 
-            machine.ejectCoin(2);
-
-
+            /*
             switch (machine.getKeyState()) {       // lire la touche fonction
             case KEY_YES:
                 logger() << "La touche OUI a ete pressee." << std::endl;
@@ -62,6 +65,7 @@ public:
             default:
                 break;
             }
+            */
         }
     }
 
@@ -77,20 +81,43 @@ public:
     void Merchandise()
     {
         ARTICLE article;     // Article voulu par le client
+        int prixArticle;
 
-        if (machine.shouldQuit()) {
-            return;
-        }
+        // machine.resetKeyFunction()
 
         while (1) {
+            // Si l'utilisateur veut stoper le programme
+            if (machine.shouldQuit()) {
+                return;
+            }
+
+            // Si aucun compte n'est ouvert
+            if (machine.isOpenAccount()) {
+               continue;
+            }
 
             article = machine.getArticle();   // lecture du souhait du client
+            prixArticle = prixArticles[article];
+
+            // Solde insufisant
+            if (prixArticle > machine.getCreditOpenAccount()) {
+                logger() << std::endl;
+                logger() << "Solde insuffisant pour cet article." << std::endl;
+                continue;
+            }
+
             logger() << "[Marchandise]" << std::endl;
             logger() << "Article selectionne : " << std::endl;
             displayArticle(article);
             logger() << std::endl;
-            machine.ejectArticle(article);
 
+            // Achat de l'article
+            machine.updateOpenAccount(-prixArticle);
+            machine.ejectArticle(article);
+            logger() << "Article achete avec succes." << std::endl;
+            logger() << "Solde restant: " << machine.getCreditOpenAccount() << std::endl;
+
+            // machine.ejectCoin(2);
         }
     }
 
