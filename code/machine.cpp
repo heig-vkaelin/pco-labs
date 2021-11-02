@@ -9,8 +9,8 @@
 #include "machine.h"
 
 /** InventoryCoins: inventaire des coins de monnaies dans la machine. */
-//static std::array<unsigned, 9> InventoryCoins = {3,3,3,3,3,3,3,3,3};
-static std::array<unsigned, 9> InventoryCoins = {0,0,0,0,0,0,0,0,0};
+static std::array<unsigned, 9> InventoryCoins = {3,3,3,3,3,3,3,3,3};
+//static std::array<unsigned, 9> InventoryCoins = {0,0,0,0,0,0,0,0,0};
 
 /** InventoryItem: inventaire des items distribuables dans la machine. */
 static std::array<unsigned, MAX_ARTICLES> InventoryItem = {4,4,4,4};
@@ -294,7 +294,11 @@ void Machine::processKey()
            case '1':  case '2':  case '3':  case '4':  case '5':  case '6':
            case '7':  case '8':  case '9':
                car -= '0';
-               bufferCoinsIntroduction.put(car);
+               if (bufferCoinsIntroduction.put(car)) {
+                   m_mutex.lock();
+                   InventoryCoins[car - 1] ++;
+                   m_mutex.unlock();
+               }
                m_coin.release();
            break;
            case '+':
@@ -350,4 +354,3 @@ void Machine::quit()
     m_coin.release();
     m_article.release();
 }
-
