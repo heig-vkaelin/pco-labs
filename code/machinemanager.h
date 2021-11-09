@@ -11,7 +11,8 @@
 
 #include "machineinterface.h"
 
-
+static PcoMutex mutexSomme;
+static PcoMutex mutexCompte;
 
 class MachineManager
 {
@@ -44,14 +45,17 @@ public:
                 break;
             }
 
-            // Transfère de la somme introduite dans le compte
+            mutexCompte.lock();
             if (machine.isOpenAccount()) {
-                logger() << "Solde de " << sommeIntroduite << " ajouté au compte." << std::endl;
+                logger() << "Pièce de " << coin << " ajoutée au compte." << std::endl;
                 machine.updateOpenAccount(coin);
             } else {
+               mutexSomme.lock();
                sommeIntroduite += coin;
                logger() << "Solde disponible: " << sommeIntroduite << std::endl;
+               mutexSomme.unlock();
             }
+            mutexCompte.unlock();
         }
     }
 
@@ -80,51 +84,70 @@ public:
             prixArticle = prixArticles[article];
 
             // Solde insufisant
-            if ((machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount()) ||
-                  prixArticle > sommeIntroduite) {
+            bool soldeInsufisant = false;
+            mutexCompte.lock();
+            soldeInsufisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
+            mutexCompte.unlock();
+
+            mutexSomme.lock();
+            soldeInsufisant = soldeInsufisant || prixArticle > sommeIntroduite;
+            mutexSomme.unlock();
+
+            if (soldeInsufisant) {
                 logger() << std::endl;
-                logger() << "Solde insuffisant pour cet article." << std::endl;
+                logger() << "Solde insufisant pour cet article." << std::endl;
                 continue;
             }
 
             logger() << "[Marchandise]" << std::endl;
-            logger() << "Article selectionne : " << std::endl;
+            logger() << "Article selectionné : " << std::endl;
             displayArticle(article);
             logger() << std::endl;
 
+            mutexCompte.lock();
             if (machine.isOpenAccount()) {
                 acheterArticle(article);
                 machine.updateOpenAccount(-prixArticle);
                 logger() << "Solde restant du compte: " << machine.getCreditOpenAccount() << std::endl;
+                mutexCompte.unlock();
             } else {
+                mutexCompte.unlock();
                 // Rendre la monnaie si l'utilisateur n'a pas de compte
                 std::array<int, 9> rendu;
                 int valeurRendue = 0;
+                mutexSomme.lock();
                 int valeurAttendue = sommeIntroduite - prixArticle;
+                mutexSomme.unlock();
                 bool retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
 
                 if (retourOptimal) {
                     acheterArticle(article);
-                    rendreMoney(rendu);
+                    rendreMoney(rendu, valeurRendue);
                 } else {
                     logger() << "Rendu de votre monnaie non optimal: " << std::endl
                              << "Valeur rendue: " << valeurRendue << " / "
                              << "Valeur attendue: " << valeurAttendue << std::endl
-                             << "Acceptez-vous ?" << std::endl;
+                             << "Acceptez-vous [&/] ?" << std::endl;
 
-                    //machine.resetKeyFunction();
-                    switch (machine.getKeyState()) { // lire la touche fonction
-                    case KEY_YES:
-                        logger() << "Achat confirmé." << std::endl;
-                        acheterArticle(article);
-                        rendreMoney(rendu);
-                        break;
-                    case KEY_NO:
-                        logger() << "Achat annulé." << std::endl;
-                    default:
-                        logger() << "Achat annulé 2." << std::endl;
-                        break;
-                    }
+                    bool entreeUtilisateur = false;
+                    do {
+                        switch (machine.getKeyState()) { // lire la touche fonction
+                        case KEY_YES:
+                            logger() << "Achat confirmé." << std::endl;
+                            acheterArticle(article);
+                            rendreMoney(rendu, valeurRendue);
+                            entreeUtilisateur = true;
+                            break;
+                        case KEY_NO:
+                            logger() << "Achat annulé." << std::endl;
+                            entreeUtilisateur = true;
+                            break;
+                        default:
+                            // Attente active ici
+                            break;
+                        }
+                    } while (!entreeUtilisateur);
+                    machine.resetKeyFunction();
                 }
             }
         }
@@ -218,14 +241,16 @@ public:
         logger() << "Article acheté avec succès." << std::endl;
     }
 
-    void rendreMoney(const std::array<int, 9>& rendu) {
+    void rendreMoney(const std::array<int, 9>& rendu, int valeurRendue) {
         for (size_t i = 0; i < rendu.size(); ++i ) {
             for (int j = 0; j < rendu[i]; ++j ) {
                 COIN coin = i + 1;
                 machine.ejectCoin(coin);
             }
         }
-        sommeIntroduite = 0;
+        mutexSomme.lock();
+        sommeIntroduite -= valeurRendue;
+        mutexSomme.unlock();
     }
 
 
