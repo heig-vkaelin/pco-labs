@@ -85,7 +85,7 @@ static LISTCOMPTE *listAccounts;
 static int GetAccountId(char *name)
 {
     int car, i;
-    //while (getchar() != '\n');
+    while (getchar() != '\n');
     logger() << "Entrez l'identifiant du compte: " << std::endl;
     for (i = 0; i < MAX_ID_COMPTE - 1; ) {
         car = getchar();
@@ -274,16 +274,12 @@ void Machine::processKey()
     char car;
 
 
-    while (1) {
-        if (shouldQuit()) {
-            return;
-        }
+    while (!shouldQuit()) {
 
-       logger() << "Entrez une commande ";
+       // logger() << "Entrez une commande ";
 
-       std::cin.get(car);
-       std::cin.get();
-       logger() << "Char: " << car << std::endl;
+       std::cin >> car;
+       // logger() << "Char: " << car << std::endl;
        switch (car) {
            case '&':
                Key_State = KEY_YES;
@@ -338,13 +334,18 @@ void Machine::processKey()
 
 bool Machine::shouldQuit()
 {
-    return m_shouldQuit;
+    m_mutex.lock();
+    auto result = m_shouldQuit;
+    m_mutex.unlock();
+    return result;
 }
 
 
 void Machine::quit()
 {
+    m_mutex.lock();
     m_shouldQuit = true;
+    m_mutex.unlock();
     bufferCoinsIntroduction.put(0);
     bufferArticleIntroduction.put((ARTICLE)0);
 
@@ -354,3 +355,4 @@ void Machine::quit()
     m_coin.release();
     m_article.release();
 }
+
