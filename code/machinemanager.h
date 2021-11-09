@@ -17,6 +17,7 @@ class MachineManager
 {
     /** Prix des differents articles vendus par cette machine */
     const std::array<int, MAX_ARTICLES> prixArticles = {1,2,3,4};
+    int sommeIntroduite = 0;
 
 public:
 
@@ -36,12 +37,6 @@ public:
         COIN coin;
 
         while (1) {
-            // Si aucun compte n'est ouvert
-            if (!machine.isOpenAccount()) {
-               continue;
-            }
-            logger() << "test" << std::endl;
-
             coin = machine.getCoin();
 
             // Si l'utilisateur veut stoper le programme
@@ -49,25 +44,14 @@ public:
                 break;
             }
 
-            //machine.updateOpenAccount(coin);
-
-
-            switch (machine.getKeyState()) {       // lire la touche fonction
-            case KEY_YES:
-                logger() << "La touche OUI a ete pressee." << std::endl;
-                if (machine.getCreditOpenAccount() >= 0)
-                    logger() << "Somme sur le compte apres crédit de " << coin << " : "
-                             << machine.updateOpenAccount(coin) << std::endl;
-                break;
-            case KEY_NO:
-                logger() << "La touche NON a ete pressee." << std::endl;
-                if (machine.getCreditOpenAccount() >= 0)
-                    logger() << "Somme sur le compte apres débit de " << coin << " : "
-                             << machine.updateOpenAccount(-coin) << std::endl;
-            default:
-                break;
+            // Transfère de la somme introduite dans le compte
+            if (machine.isOpenAccount()) {
+                logger() << "Solde de " << sommeIntroduite << " ajouté au compte." << std::endl;
+                machine.updateOpenAccount(coin);
+            } else {
+               sommeIntroduite += coin;
+               logger() << "Solde disponible: " << sommeIntroduite << std::endl;
             }
-
         }
     }
 
@@ -83,14 +67,9 @@ public:
     void Merchandise()
     {
         ARTICLE article;     // Article voulu par le client
-        int prixArticle;
-
-        // machine.resetKeyFunction()
+        int prixArticle; 
 
         while (1) {
-
-
-
             article = machine.getArticle();   // lecture du souhait du client
 
             // Si l'utilisateur veut stoper le programme
@@ -100,10 +79,9 @@ public:
 
             prixArticle = prixArticles[article];
 
-            machine.
-
             // Solde insufisant
-            if (prixArticle > machine.getCreditOpenAccount()) {
+            if ((machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount()) ||
+                  prixArticle > sommeIntroduite) {
                 logger() << std::endl;
                 logger() << "Solde insuffisant pour cet article." << std::endl;
                 continue;
@@ -114,17 +92,40 @@ public:
             displayArticle(article);
             logger() << std::endl;
 
-            // Achat de l'article
-            machine.updateOpenAccount(-prixArticle);
-            machine.ejectArticle(article);
-            logger() << "Article achete avec succes." << std::endl;
-            logger() << "Solde restant: " << machine.getCreditOpenAccount() << std::endl;
+            if (machine.isOpenAccount()) {
+                acheterArticle(article);
+                machine.updateOpenAccount(-prixArticle);
+                logger() << "Solde restant du compte: " << machine.getCreditOpenAccount() << std::endl;
+            } else {
+                // Rendre la monnaie si l'utilisateur n'a pas de compte
+                std::array<int, 9> rendu;
+                int valeurRendue = 0;
+                int valeurAttendue = sommeIntroduite - prixArticle;
+                bool retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
 
-            // Rendre la monnaie si l'utilisateur n'a pas de compte
-            if (!machine.isOpenAccount()) {
-                bool optimalReturn = amountToReturn();
+                if (retourOptimal) {
+                    acheterArticle(article);
+                    rendreMoney(rendu);
+                } else {
+                    logger() << "Rendu de votre monnaie non optimal: " << std::endl
+                             << "Valeur rendue: " << valeurRendue << " / "
+                             << "Valeur attendue: " << valeurAttendue << std::endl
+                             << "Acceptez-vous ?" << std::endl;
 
-                // machine.ejectCoin(2);
+                    //machine.resetKeyFunction();
+                    switch (machine.getKeyState()) { // lire la touche fonction
+                    case KEY_YES:
+                        logger() << "Achat confirmé." << std::endl;
+                        acheterArticle(article);
+                        rendreMoney(rendu);
+                        break;
+                    case KEY_NO:
+                        logger() << "Achat annulé." << std::endl;
+                    default:
+                        logger() << "Achat annulé 2." << std::endl;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -210,6 +211,21 @@ public:
         case LOLLIPOP: logger() << "Lollipop " << std::endl; break;
         default: logger() << "Error, unexisting article " << std::endl; break;
         }
+    }
+
+    void acheterArticle(ARTICLE article) {
+        machine.ejectArticle(article);
+        logger() << "Article acheté avec succès." << std::endl;
+    }
+
+    void rendreMoney(const std::array<int, 9>& rendu) {
+        for (size_t i = 0; i < rendu.size(); ++i ) {
+            for (int j = 0; j < rendu[i]; ++j ) {
+                COIN coin = i + 1;
+                machine.ejectCoin(coin);
+            }
+        }
+        sommeIntroduite = 0;
     }
 
 
