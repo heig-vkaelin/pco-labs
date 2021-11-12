@@ -45,6 +45,7 @@ public:
                 break;
             }
 
+            // Ajout de la pièce au solde dans la machine ou du compte
             if (machine.isOpenAccount()) {
                 mutexCompte.lock();
                 logger() << "Pièce de " << coin << " ajoutée au compte." << std::endl;
@@ -92,7 +93,7 @@ public:
 
             prixArticle = prixArticles[article];
 
-            // Vérification du solde
+            // Vérification du solde inséré dans la machine ou du compte
             mutexCompte.lock();
             soldeInsuffisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
             mutexCompte.unlock();
@@ -263,7 +264,7 @@ public:
             return;
         }
 
-        // Rendu non optimal, l'utilisateur à le choix d'accepter ou non:
+        // Rendu non optimal, l'utilisateur à le choix d'accepter ou non
 
         logger() << "Rendu de votre monnaie non optimal: " << std::endl
                  << "Valeur rendue: " << valeurRendue << " / "
