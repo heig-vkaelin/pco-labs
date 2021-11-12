@@ -46,16 +46,22 @@ public:
             }
 
             mutexCompte.lock();
-            if (machine.isOpenAccount()) {
+            bool compteOuvert = false;
+            compteOuvert = machine.isOpenAccount();
+            mutexCompte.unlock();
+
+            if (compteOuvert) {
+                mutexCompte.lock();
                 logger() << "Pièce de " << coin << " ajoutée au compte." << std::endl;
                 machine.updateOpenAccount(coin);
+                logger() << "Solde disponible du compte: " << machine.getCreditOpenAccount() << std::endl;
+                mutexCompte.unlock();
             } else {
-               mutexSomme.lock();
-               sommeIntroduite += coin;
-               logger() << "Solde disponible: " << sommeIntroduite << std::endl;
-               mutexSomme.unlock();
+                mutexSomme.lock();
+                sommeIntroduite += coin;
+                logger() << "Solde disponible: " << sommeIntroduite << std::endl;
+                mutexSomme.unlock();
             }
-            mutexCompte.unlock();
         }
     }
 
@@ -83,19 +89,17 @@ public:
 
             prixArticle = prixArticles[article];
 
-            // Solde insufisant
-            bool soldeInsufisant = false;
             mutexCompte.lock();
-            soldeInsufisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
+            bool soldeInsuffisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
             mutexCompte.unlock();
 
             mutexSomme.lock();
-            soldeInsufisant = soldeInsufisant || prixArticle > sommeIntroduite;
+            soldeInsuffisant = soldeInsuffisant || (!machine.isOpenAccount() && prixArticle > sommeIntroduite);
             mutexSomme.unlock();
 
-            if (soldeInsufisant) {
+            if (soldeInsuffisant) {
                 logger() << std::endl;
-                logger() << "Solde insufisant pour cet article." << std::endl;
+                logger() << "Solde insuffisant pour cet article." << std::endl;
                 continue;
             }
 
@@ -122,6 +126,9 @@ public:
 
                 if (retourOptimal) {
                     acheterArticle(article);
+                    mutexSomme.lock();
+                    sommeIntroduite -= prixArticle;
+                    mutexSomme.unlock();
                     rendreMoney(rendu, valeurRendue);
                 } else {
                     logger() << "Rendu de votre monnaie non optimal: " << std::endl
@@ -135,6 +142,9 @@ public:
                         case KEY_YES:
                             logger() << "Achat confirmé." << std::endl;
                             acheterArticle(article);
+                            mutexSomme.lock();
+                            sommeIntroduite -= prixArticle;
+                            mutexSomme.unlock();
                             rendreMoney(rendu, valeurRendue);
                             entreeUtilisateur = true;
                             break;
