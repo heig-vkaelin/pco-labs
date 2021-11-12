@@ -220,9 +220,11 @@ public:
      * @param rendu: pièces à rendre
      */
     void rendreMoney(const std::array<int, 9>& rendu) {
+        COIN coin;
+
         for (size_t i = 0; i < rendu.size(); ++i ) {
             for (int j = 0; j < rendu[i]; ++j ) {
-                COIN coin = i + 1;
+                coin = i + 1;
                 machine.ejectCoin(coin);
             }
         }
@@ -252,11 +254,15 @@ public:
      */
     void acheterArticleSansCompte(ARTICLE article, int prixArticle) {
         std::array<int, 9> rendu;
-        int valeurRendue = 0;
+        int valeurRendue;
+        int valeurAttendue;
+        bool retourOptimal;
+        bool entreeUtilisateur;
+
         mutexSomme.lock();
-        int valeurAttendue = sommeIntroduite - prixArticle;
+        valeurAttendue = sommeIntroduite - prixArticle;
         mutexSomme.unlock();
-        bool retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
+        retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
 
         if (retourOptimal) {
             acheterArticle(article);
@@ -264,14 +270,14 @@ public:
             return;
         }
 
-        // Rendu non optimal, l'utilisateur à le choix d'accepter ou non
+        // Rendu non optimal, l'utilisateur a le choix d'accepter ou non
 
         logger() << "Rendu de votre monnaie non optimal: " << std::endl
                  << "Valeur rendue: " << valeurRendue << " / "
                  << "Valeur attendue: " << valeurAttendue << std::endl
                  << "Acceptez-vous [&/] ?" << std::endl;
 
-        bool entreeUtilisateur = false;
+        entreeUtilisateur = false;
         do {
             switch (machine.getKeyState()) { // lire la touche fonction
             case KEY_YES:
