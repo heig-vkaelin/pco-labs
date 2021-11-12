@@ -45,12 +45,7 @@ public:
                 break;
             }
 
-            mutexCompte.lock();
-            bool compteOuvert = false;
-            compteOuvert = machine.isOpenAccount();
-            mutexCompte.unlock();
-
-            if (compteOuvert) {
+            if (machine.isOpenAccount()) {
                 mutexCompte.lock();
                 logger() << "Pièce de " << coin << " ajoutée au compte." << std::endl;
                 machine.updateOpenAccount(coin);
@@ -77,7 +72,8 @@ public:
     void Merchandise()
     {
         ARTICLE article;     // Article voulu par le client
-        int prixArticle; 
+        int prixArticle;
+        bool soldeInsuffisant;
 
         while (1) {
             article = machine.getArticle();   // lecture du souhait du client
@@ -96,8 +92,9 @@ public:
 
             prixArticle = prixArticles[article];
 
+            // Vérification du solde
             mutexCompte.lock();
-            bool soldeInsuffisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
+            soldeInsuffisant = machine.isOpenAccount() && prixArticle > machine.getCreditOpenAccount();
             mutexCompte.unlock();
 
             mutexSomme.lock();
@@ -115,59 +112,14 @@ public:
             displayArticle(article);
             logger() << std::endl;
 
-            mutexCompte.lock();
+            // Achat de l'article
             if (machine.isOpenAccount()) {
-                acheterArticle(article);
-                machine.updateOpenAccount(-prixArticle);
-                logger() << "Solde restant du compte: " << machine.getCreditOpenAccount() << std::endl;
-                mutexCompte.unlock();
+                acheterArticleAvecCompte(article, prixArticle);
             } else {
-                mutexCompte.unlock();
-                // Rendre la monnaie si l'utilisateur n'a pas de compte
-                std::array<int, 9> rendu;
-                int valeurRendue = 0;
-                mutexSomme.lock();
-                int valeurAttendue = sommeIntroduite - prixArticle;
-                mutexSomme.unlock();
-                bool retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
-
-                if (retourOptimal) {
-                    acheterArticle(article);
-                    mutexSomme.lock();
-                    sommeIntroduite -= prixArticle;
-                    mutexSomme.unlock();
-                    rendreMoney(rendu, valeurRendue);
-                } else {
-                    logger() << "Rendu de votre monnaie non optimal: " << std::endl
-                             << "Valeur rendue: " << valeurRendue << " / "
-                             << "Valeur attendue: " << valeurAttendue << std::endl
-                             << "Acceptez-vous [&/] ?" << std::endl;
-
-                    bool entreeUtilisateur = false;
-                    do {
-                        switch (machine.getKeyState()) { // lire la touche fonction
-                        case KEY_YES:
-                            logger() << "Achat confirmé." << std::endl;
-                            acheterArticle(article);
-                            mutexSomme.lock();
-                            sommeIntroduite -= prixArticle;
-                            mutexSomme.unlock();
-                            rendreMoney(rendu, valeurRendue);
-                            entreeUtilisateur = true;
-                            break;
-                        case KEY_NO:
-                            logger() << "Achat annulé." << std::endl;
-                            entreeUtilisateur = true;
-                            break;
-                        default:
-                            // Attente active ici
-                            break;
-                        }
-                    } while (!entreeUtilisateur);
-                    machine.resetKeyFunction();
-                }
+                acheterArticleSansCompte(article, prixArticle);
             }
-        }
+
+        } // fin de la boucle infinie
     }
 
 
@@ -253,23 +205,93 @@ public:
         }
     }
 
+    /**
+     * Ejecte l'article acheté et affiche un petit message de succès
+     * @param article : Article à acheter
+     */
     void acheterArticle(ARTICLE article) {
         machine.ejectArticle(article);
         logger() << "Article acheté avec succès." << std::endl;
     }
 
-    void rendreMoney(const std::array<int, 9>& rendu, int valeurRendue) {
+    /**
+     * Sort de la machines les différentes pièces à rendre
+     * @param rendu: pièces à rendre
+     */
+    void rendreMoney(const std::array<int, 9>& rendu) {
         for (size_t i = 0; i < rendu.size(); ++i ) {
             for (int j = 0; j < rendu[i]; ++j ) {
                 COIN coin = i + 1;
                 machine.ejectCoin(coin);
             }
         }
+        // Le solde courant introduit passe à 0
         mutexSomme.lock();
-        sommeIntroduite -= valeurRendue;
+        sommeIntroduite = 0;
         mutexSomme.unlock();
     }
 
+    /**
+     * Achète l'article souhaité via le solde du compte ouvert actuellement
+     * @param article : article souhaité
+     * @param prixArticle : prix de l'article souhaité
+     */
+    void acheterArticleAvecCompte(ARTICLE article, int prixArticle) {
+        acheterArticle(article);
+        mutexCompte.lock();
+        machine.updateOpenAccount(-prixArticle);
+        logger() << "Solde restant du compte: " << machine.getCreditOpenAccount() << std::endl;
+        mutexCompte.unlock();
+    }
+
+    /**
+     * Achète l'article souhaité avec système de rendu de monnaie
+     * @param article : article souhaité
+     * @param prixArticle : prix de l'article souhaité
+     */
+    void acheterArticleSansCompte(ARTICLE article, int prixArticle) {
+        std::array<int, 9> rendu;
+        int valeurRendue = 0;
+        mutexSomme.lock();
+        int valeurAttendue = sommeIntroduite - prixArticle;
+        mutexSomme.unlock();
+        bool retourOptimal = amountToReturn(valeurAttendue, rendu, valeurRendue);
+
+        if (retourOptimal) {
+            acheterArticle(article);
+            rendreMoney(rendu);
+            return;
+        }
+
+        // Rendu non optimal, l'utilisateur à le choix d'accepter ou non:
+
+        logger() << "Rendu de votre monnaie non optimal: " << std::endl
+                 << "Valeur rendue: " << valeurRendue << " / "
+                 << "Valeur attendue: " << valeurAttendue << std::endl
+                 << "Acceptez-vous [&/] ?" << std::endl;
+
+        bool entreeUtilisateur = false;
+        do {
+            switch (machine.getKeyState()) { // lire la touche fonction
+            case KEY_YES:
+                logger() << "Achat confirmé." << std::endl;
+                acheterArticle(article);
+                rendreMoney(rendu);
+                entreeUtilisateur = true;
+                break;
+            case KEY_NO:
+                logger() << "Achat annulé." << std::endl;
+                entreeUtilisateur = true;
+                break;
+            default:
+                // Attente active ici
+                break;
+            }
+        } while (!entreeUtilisateur);
+        // On reset le choix de l'utilisateur afin qu'il puisse changer d'avis lors du
+        // prochain achat.
+        machine.resetKeyFunction();
+    }
 
 private:
 
