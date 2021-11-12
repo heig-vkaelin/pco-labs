@@ -87,6 +87,13 @@ public:
                 break;
             }
 
+            // Article non disponible
+            if (machine.getInventoryArticle(article) <= 0) {
+                logger() << std::endl;
+                logger() << "Article plus disponible. Veuillez choisir un autre article." << std::endl;
+                continue;
+            }
+
             prixArticle = prixArticles[article];
 
             mutexCompte.lock();
