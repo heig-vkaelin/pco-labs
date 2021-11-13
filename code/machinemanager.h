@@ -1,5 +1,5 @@
 /**
-  \file mythread.h
+  \file machinemanager.h
   \author Valentin Kaelin & Lazar Pavicevic
   \date 13.11.2021
   \brief Déclaration et implémentation de machinemanager.
