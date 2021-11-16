@@ -21,6 +21,13 @@ void LocomotiveBehavior::run()
     //sharedSection->getAccess(loco);
     //sharedSection->leave(loco);
 
+    // Attend que la loco passe sur les differents contacts de son parcours.
+    for (size_t i = 1; i < parcours.size(); ++i) {
+        loco.afficherMessage("Attente contact");
+        attendre_contact(parcours[i]);
+        qDebug() << "Loco " << loco.numero() << " a atteint le contact " << parcours[i] <<  ".\n";
+    }
+
     // while (1) {}
 }
 

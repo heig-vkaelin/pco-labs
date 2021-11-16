@@ -64,7 +64,7 @@ int cmain()
     diriger_aiguillage(13, TOUT_DROIT, 0);
     diriger_aiguillage(14, DEVIE     , 0);
     diriger_aiguillage(15, DEVIE     , 0);
-    diriger_aiguillage(16, TOUT_DROIT, 0);
+    diriger_aiguillage(16, TOUT_DROIT, 0); // modif ici
     diriger_aiguillage(17, TOUT_DROIT, 0);
     diriger_aiguillage(18, TOUT_DROIT, 0);
     diriger_aiguillage(19, TOUT_DROIT, 0);
@@ -94,6 +94,10 @@ int cmain()
     // Affiche un message dans la console de l'application graphique
     afficher_message("Hit play to start the simulation...");
 
+    // Création des parcours
+    std::vector<int> parcoursA = {24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 28, 32};
+    std::vector<int> parcoursB = {21};
+
     /*********************
      * Threads des locos *
      ********************/
@@ -102,9 +106,9 @@ int cmain()
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
     // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, parcoursA);
     // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, parcoursB);
 
     // Lanchement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));

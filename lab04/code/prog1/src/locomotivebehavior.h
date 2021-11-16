@@ -7,6 +7,7 @@
 #ifndef LOCOMOTIVEBEHAVIOR_H
 #define LOCOMOTIVEBEHAVIOR_H
 
+#include <vector>
 #include "locomotive.h"
 #include "launchable.h"
 #include "sharedsectioninterface.h"
@@ -21,7 +22,8 @@ public:
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
      */
-    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection /*, autres paramètres éventuels */) : loco(loco), sharedSection(sharedSection) {
+    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, std::vector<int>& parcours)
+        : loco(loco), sharedSection(sharedSection), parcours(parcours) {
         // Eventuel code supplémentaire du constructeur
     }
 
@@ -56,6 +58,8 @@ protected:
      *
      * Par exemple la priorité ou le parcours
      */
+
+    std::vector<int> parcours;
 };
 
 #endif // LOCOMOTIVEBEHAVIOR_H
