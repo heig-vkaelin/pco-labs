@@ -22,10 +22,16 @@ void LocomotiveBehavior::run()
     //sharedSection->leave(loco);
 
     // Attend que la loco passe sur les differents contacts de son parcours.
-    for (size_t i = 1; i < parcours.size(); ++i) {
-        loco.afficherMessage("Attente contact");
+    for (size_t i = 0; i < parcours.size(); ++i) {
         attendre_contact(parcours[i]);
-        qDebug() << "Loco " << loco.numero() << " a atteint le contact " << parcours[i] <<  ".\n";
+        afficher_message(qPrintable(QString("Loco %1 a atteint le contact %2.").arg(loco.numero()).arg(parcours.at(i))));
+        loco.afficherMessage(QString("Atteint contact %1.").arg(parcours.at(i)));
+
+        // Les deux s'arrêtent en même temps...
+        /* if (parcours[parcours.size() - 1]) {
+            loco.arreter();
+            loco.afficherMessage(QString("Arret au dernier point [%1] du parcours .").arg(parcours.at(i)));
+        } */
     }
 
     // while (1) {}
