@@ -1,4 +1,10 @@
-
+/**
+  \file machinemanager.h
+  \author Valentin Kaelin & Lazar Pavicevic
+  \date 13.11.2021
+  \brief Déclaration et implémentation de machinemanager.
+  Ce fichier contient la déclaration et l'implémentation de la classe MachineManger. Elle contient toute la logique sur la gestion des pièces et des marchandises.
+*/
 
 #ifndef MACHINEMANAGER_H
 #define MACHINEMANAGER_H
@@ -11,14 +17,19 @@
 
 #include "machineinterface.h"
 
-static PcoMutex mutexSomme;
-static PcoMutex mutexCompte;
-
 class MachineManager
 {
     /** Prix des differents articles vendus par cette machine */
     const std::array<int, MAX_ARTICLES> prixArticles = {1,2,3,4};
+
+    // Solde entré avec des pièces sans utiliser de compte
     int sommeIntroduite = 0;
+
+    // Permet de protéger la variable sommeIntroduite
+    PcoMutex mutexSomme;
+
+    // Permet de protéger le crédit du compte
+    PcoMutex mutexCompte;
 
 public:
 

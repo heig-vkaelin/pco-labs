@@ -9,8 +9,8 @@
 #include "machine.h"
 
 /** InventoryCoins: inventaire des coins de monnaies dans la machine. */
-//static std::array<unsigned, 9> InventoryCoins = {3,3,3,3,3,3,3,3,3};
-static std::array<unsigned, 9> InventoryCoins = {2,2,2,0,0,0,0,0,0};
+static std::array<unsigned, 9> InventoryCoins = {3,3,3,3,3,3,3,3,3};
+//static std::array<unsigned, 9> InventoryCoins = {0,0,0,0,0,0,0,0,0};
 
 /** InventoryItem: inventaire des items distribuables dans la machine. */
 static std::array<unsigned, MAX_ARTICLES> InventoryItem = {4,4,4,4};
