@@ -6,6 +6,7 @@
 
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
+#include "sharedsection.h"
 
 void LocomotiveBehavior::run()
 {
@@ -16,14 +17,25 @@ void LocomotiveBehavior::run()
 
     /* A vous de jouer ! */
 
-    // Vous pouvez appeler les méthodes de la section partagée comme ceci :
-    //sharedSection->request(loco);
-    //sharedSection->getAccess(loco);
-    //sharedSection->leave(loco);
+    size_t i = 0;
 
     // Attend que la loco passe sur les differents contacts de son parcours.
-    for (size_t i = 0; i < parcours.size(); ++i) {
+    while (true) {
+        size_t pointToCheck = (i + 2) % parcours.size();
+
         attendre_contact(parcours[i]);
+        // Entrée section partagée
+        if (parcours.at(pointToCheck) == shared.at(0)) {
+            diriger_aiguillage(aiguillages[0].first, aiguillages[0].second, 0);
+            sharedSection->access(loco);
+        }
+        // Sortie section partagée
+        else if(parcours.at(i) == shared.at(shared.size() - 1)) {
+            // TODO: la rouge se remet pas bien à la sortie de la section
+            // Marche que une fois
+            diriger_aiguillage(aiguillages[1].first, aiguillages[1].second, 0);
+            sharedSection->leave(loco);
+        }
         afficher_message(qPrintable(QString("Loco %1 a atteint le contact %2.").arg(loco.numero()).arg(parcours.at(i))));
         loco.afficherMessage(QString("Atteint contact %1.").arg(parcours.at(i)));
 
@@ -32,6 +44,10 @@ void LocomotiveBehavior::run()
             loco.arreter();
             loco.afficherMessage(QString("Arret au dernier point [%1] du parcours .").arg(parcours.at(i)));
         } */
+
+        i++;
+        if (i == parcours.size())
+            i = 0;
     }
 
     // while (1) {}

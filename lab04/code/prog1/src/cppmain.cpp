@@ -18,7 +18,7 @@
 // Locomotive A
 static Locomotive locoA(7 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 // Locomotive B
-static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 12 /* Vitesse */);
+static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 
 //Arret d'urgence
 void emergency_stop()
@@ -58,13 +58,13 @@ int cmain()
     diriger_aiguillage(7,  TOUT_DROIT, 0);
     diriger_aiguillage(8,  DEVIE     , 0);
     diriger_aiguillage(9,  DEVIE     , 0);
-    diriger_aiguillage(10, TOUT_DROIT, 0);
+    diriger_aiguillage(10, DEVIE, 0); // modif ici
     diriger_aiguillage(11, TOUT_DROIT, 0);
     diriger_aiguillage(12, TOUT_DROIT, 0);
     diriger_aiguillage(13, TOUT_DROIT, 0);
     diriger_aiguillage(14, DEVIE     , 0);
     diriger_aiguillage(15, DEVIE     , 0);
-    diriger_aiguillage(16, TOUT_DROIT, 0); // modif ici
+    diriger_aiguillage(16, TOUT_DROIT, 0);
     diriger_aiguillage(17, TOUT_DROIT, 0);
     diriger_aiguillage(18, TOUT_DROIT, 0);
     diriger_aiguillage(19, TOUT_DROIT, 0);
@@ -96,7 +96,16 @@ int cmain()
 
     // Création des parcours
     std::vector<int> parcoursA = {24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 28, 32};
-    std::vector<int> parcoursB = {21};
+    std::vector<int> parcoursB = {21, 20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29};
+    std::vector<int> sharedSectionPoints = {15, 14, 7, 6};
+    std::vector<std::pair<int, int>> aiguillagesA = {
+        {10, DEVIE},
+        {2, DEVIE},
+    };
+    std::vector<std::pair<int, int>> aiguillagesB = {
+        {10, DEVIE},
+        {2, TOUT_DROIT},
+    };
 
     /*********************
      * Threads des locos *
@@ -106,9 +115,9 @@ int cmain()
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
     // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, parcoursA);
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, parcoursA, sharedSectionPoints, aiguillagesA);
     // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, parcoursB);
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, parcoursB, sharedSectionPoints, aiguillagesB);
 
     // Lanchement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));
