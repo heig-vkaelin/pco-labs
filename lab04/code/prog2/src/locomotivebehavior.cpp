@@ -8,31 +8,62 @@
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
 
-void LocomotiveBehavior::run()
-{
-    //Initialisation de la locomotive
+void LocomotiveBehavior::run() {
+    // Initialisation de la locomotive
     loco.allumerPhares();
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
     /* A vous de jouer ! */
+    SharedSectionInterface::LocoId locoId = loco.numero() == 7 ?
+                SharedSectionInterface::LocoId::LA :
+                SharedSectionInterface::LocoId::LB;
+    SharedSectionInterface::EntryPoint entryPoint = SharedSectionInterface::EntryPoint::EA;
 
-    // Vous pouvez appeler les méthodes de la section partagée comme ceci :
-    //sharedSection->request(loco);
-    //sharedSection->getAccess(loco);
-    //sharedSection->leave(loco);
+    int nbTurns = NB_TURNS;
+    int contactIndex = 0;
 
-    while(1) {}
+    while(true) {
+        int contact = route.getContact(contactIndex);
+        attendre_contact(contact);
+
+        contactIndex++;
+
+        if (contact == route.getSectionStart()) {
+            //sharedSection->request(loco, locoId, entryPoint);
+            sharedSection->getAccess(loco, locoId);
+            route.applyRailwaySwitches();
+            loco.afficherMessage("Entrée trançon partagé!");
+        } else if (contact == route.getSectionEnd()) {
+            sharedSection->leave(loco, locoId);
+            loco.afficherMessage("Sortie trançon partagé!");
+        } else if (contact == route.getTurnEnd()) {
+            nbTurns--;
+            if (!nbTurns) {
+                inverse();
+                nbTurns = NB_TURNS;
+            }
+            contactIndex = 0;
+        }
+    }
+
 }
 
-void LocomotiveBehavior::printStartMessage()
-{
+void LocomotiveBehavior::printStartMessage() {
     qDebug() << "[START] Thread de la loco" << loco.numero() << "lancé";
     loco.afficherMessage("Je suis lancée !");
 }
 
-void LocomotiveBehavior::printCompletionMessage()
-{
+void LocomotiveBehavior::printCompletionMessage() {
     qDebug() << "[STOP] Thread de la loco" << loco.numero() << "a terminé correctement";
     loco.afficherMessage("J'ai terminé");
+}
+
+void LocomotiveBehavior::inverse() {
+    loco.arreter();
+    loco.inverserSens();
+    route.inverse();
+    loco.demarrer();
+    qDebug() << "[INVERSE] La loco" << loco.numero() << "a changé de sens";
+    loco.afficherMessage("J'ai changé de sens!");
 }

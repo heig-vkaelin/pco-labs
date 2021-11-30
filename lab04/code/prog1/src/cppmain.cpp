@@ -18,7 +18,7 @@
 // Locomotive A
 static Locomotive locoA(7 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 // Locomotive B
-static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
+static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 12 /* Vitesse */);
 
 //Arret d'urgence
 void emergency_stop()
@@ -114,12 +114,6 @@ int cmain()
 
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
-
-    /*
-    std::vector<int> route, int contactStartShared, int contactEndShared,
-              int contactStartSharedInversed, int contactEndSharedInversed,
-              std::vector<std::pair<int, int>>& railwaySwitches
-              */
 
     // Création des routes
     Route routeA = Route(pointsA, 23, 5, 34, 16, switchesA);

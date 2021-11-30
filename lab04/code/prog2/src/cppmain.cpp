@@ -11,6 +11,7 @@
 #include "locomotivebehavior.h"
 #include "sharedsectioninterface.h"
 #include "sharedsection.h"
+#include "route.h"
 
 // Locomotives :
 // Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
@@ -24,7 +25,8 @@ static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle
 //Arret d'urgence
 void emergency_stop()
 {
-    // TODO
+    locoA.arreter();
+    locoB.arreter();
 
     afficher_message("\nSTOP!");
 }
@@ -38,7 +40,7 @@ int cmain()
      ************/
 
     //Choix de la maquette (A ou B)
-    selection_maquette(MAQUETTE_A /*MAQUETTE_B*/);
+    selection_maquette(MAQUETTE_A);
 
     /**********************************
      * Initialisation des aiguillages *
@@ -49,7 +51,7 @@ int cmain()
     // Vous devrez utiliser cette fonction pour la section partagée pour aiguiller les locos
     // sur le bon parcours (par exemple à la sortie de la section partagée) vous pouvez l'
     // appeler depuis vos thread des locos par ex.
-    diriger_aiguillage(1,  TOUT_DROIT, 0);
+    diriger_aiguillage(1,  DEVIE     , 0); // modif ici
     diriger_aiguillage(2,  DEVIE     , 0);
     diriger_aiguillage(3,  DEVIE     , 0);
     diriger_aiguillage(4,  TOUT_DROIT, 0);
@@ -94,6 +96,20 @@ int cmain()
     // Affiche un message dans la console de l'application graphique
     afficher_message("Hit play to start the simulation...");
 
+    // Création des parcours
+    std::vector<int> pointsA = {25, 24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 32};
+    std::vector<int> pointsB = {22, 21, 20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28};
+    std::vector<RailwaySwitch> switchesA = {
+        {10, DEVIE},
+        {2, DEVIE},
+        {9, DEVIE},
+    };
+    std::vector<RailwaySwitch> switchesB = {
+        {10, DEVIE},
+        {2, TOUT_DROIT},
+        {9, TOUT_DROIT},
+    };
+
     /*********************
      * Threads des locos *
      ********************/
@@ -101,10 +117,14 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
+    // Création des routes
+    Route routeA = Route(pointsA, 23, 5, 34, 16, switchesA);
+    Route routeB = Route(pointsB, 19, 1, 31, 13, switchesB);
+
     // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA);
     // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection /*, autres paramètres ...*/);
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB);
 
     // Lanchement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));
