@@ -37,8 +37,8 @@ int cmain()
      * Maquette *
      ************/
 
-    //Choix de la maquette (A ou B)
-    selection_maquette(MAQUETTE_A /*MAQUETTE_B*/);
+    // Choix de la maquette (A ou B)
+    selection_maquette(MAQUETTE_A);
 
     /**********************************
      * Initialisation des aiguillages *
@@ -49,7 +49,7 @@ int cmain()
     // Vous devrez utiliser cette fonction pour la section partagée pour aiguiller les locos
     // sur le bon parcours (par exemple à la sortie de la section partagée) vous pouvez l'
     // appeler depuis vos thread des locos par ex.
-    diriger_aiguillage(1,  TOUT_DROIT, 0);
+    diriger_aiguillage(1,  DEVIE     , 0); // modif ici
     diriger_aiguillage(2,  DEVIE     , 0);
     diriger_aiguillage(3,  DEVIE     , 0);
     diriger_aiguillage(4,  TOUT_DROIT, 0);
@@ -58,7 +58,7 @@ int cmain()
     diriger_aiguillage(7,  TOUT_DROIT, 0);
     diriger_aiguillage(8,  DEVIE     , 0);
     diriger_aiguillage(9,  DEVIE     , 0);
-    diriger_aiguillage(10, DEVIE, 0); // modif ici
+    diriger_aiguillage(10, TOUT_DROIT, 0);
     diriger_aiguillage(11, TOUT_DROIT, 0);
     diriger_aiguillage(12, TOUT_DROIT, 0);
     diriger_aiguillage(13, TOUT_DROIT, 0);
@@ -95,16 +95,17 @@ int cmain()
     afficher_message("Hit play to start the simulation...");
 
     // Création des parcours
-    std::vector<int> parcoursA = {24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 28, 32};
-    std::vector<int> parcoursB = {21, 20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29};
-    std::vector<int> sharedSectionPoints = {15, 14, 7, 6};
-    std::vector<std::pair<int, int>> aiguillagesA = {
+    std::vector<int> pointsA = {25, 24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 32};
+    std::vector<int> pointsB = {22, 21, 20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28};
+    std::vector<RailwaySwitch> switchesA = {
         {10, DEVIE},
         {2, DEVIE},
+        {9, DEVIE},
     };
-    std::vector<std::pair<int, int>> aiguillagesB = {
+    std::vector<RailwaySwitch> switchesB = {
         {10, DEVIE},
         {2, TOUT_DROIT},
+        {9, TOUT_DROIT},
     };
 
     /*********************
@@ -114,12 +115,22 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
-    // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, parcoursA, sharedSectionPoints, aiguillagesA);
-    // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, parcoursB, sharedSectionPoints, aiguillagesB);
+    /*
+    std::vector<int> route, int contactStartShared, int contactEndShared,
+              int contactStartSharedInversed, int contactEndSharedInversed,
+              std::vector<std::pair<int, int>>& railwaySwitches
+              */
 
-    // Lanchement des threads
+    // Création des routes
+    Route routeA = Route(pointsA, 23, 5, 34, 16, switchesA);
+    Route routeB = Route(pointsB, 19, 1, 31, 13, switchesB);
+
+    // Création du thread pour la loco 0
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA);
+    // Création du thread pour la loco 1
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB);
+
+    // Lancement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));
     locoBehaveA->startThread();
     afficher_message(qPrintable(QString("Lancement thread loco B (numéro %1)").arg(locoB.numero())));

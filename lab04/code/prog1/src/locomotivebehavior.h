@@ -11,6 +11,9 @@
 #include "locomotive.h"
 #include "launchable.h"
 #include "sharedsectioninterface.h"
+#include "route.h"
+
+#define NB_TURNS 2
 
 /**
  * @brief La classe LocomotiveBehavior représente le comportement d'une locomotive
@@ -22,11 +25,8 @@ public:
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
      */
-    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection,
-                       std::vector<int>& parcours, std::vector<int>& shared,
-                       std::vector<std::pair<int, int>>& aiguillages)
-        : loco(loco), sharedSection(sharedSection), parcours(parcours), shared(shared),
-          aiguillages(aiguillages) {
+    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, Route& route)
+        : loco(loco), sharedSection(sharedSection), route(route) {
         // Eventuel code supplémentaire du constructeur
     }
 
@@ -62,9 +62,9 @@ protected:
      * Par exemple la priorité ou le parcours
      */
 
-    std::vector<int> parcours;
-    std::vector<int> shared;
-    std::vector<std::pair<int, int>> aiguillages;
+    void inverse();
+
+    Route& route;
 };
 
 #endif // LOCOMOTIVEBEHAVIOR_H
