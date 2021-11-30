@@ -41,6 +41,17 @@ public:
      */
     void request(Locomotive& loco, LocoId locoId, EntryPoint entryPoint) override {
         // TODO
+        mutex.acquire();
+        // Même point d'entrée
+        if (entry == entryPoint) {
+            loco.priority = locoId == LocoId::LA ? 1 : 0;
+        }
+        // Point d'entrée différent
+        else {
+            loco.priority = locoId == LocoId::LB ? 1 : 0;
+        }
+        entry = entryPoint;
+        mutex.release();
 
         // Exemple de message dans la console globale
         afficher_message(qPrintable(QString("The engine no. %1 requested the shared section.").arg(loco.numero())));
@@ -107,6 +118,8 @@ private:
     PcoSemaphore mutex, waiting;
     bool occupied;
     int nbWaiting;
+
+    EntryPoint entry;
 };
 
 
