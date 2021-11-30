@@ -13,9 +13,9 @@ Route::Route(vector<int> route, int contactStartShared, int contactEndShared,
       contactEndSharedInversed(contactEndSharedInversed), inversed(false)
 {
     size_t size = route.size();
-    if (size < 0) {
-        // throw exception("Le parcours ne peut pas être vide!");
-    }
+    if (size < 0)
+        throw runtime_error("Le parcours ne peut pas être vide!");
+
     contactEndTurn = route.at(size - 1);
 }
 
