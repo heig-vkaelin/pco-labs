@@ -29,8 +29,11 @@ void LocomotiveBehavior::run() {
 
         contactIndex++;
 
+        if (contact == route.getSectionRequest()){
+            sharedSection->request(loco, locoId, entryPoint);
+            loco.afficherMessage("Demande d'entrée en trançon partagé!");
+        }
         if (contact == route.getSectionStart()) {
-            //sharedSection->request(loco, locoId, entryPoint);
             sharedSection->getAccess(loco, locoId);
             route.applyRailwaySwitches();
             loco.afficherMessage("Entrée trançon partagé!");

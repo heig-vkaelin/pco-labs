@@ -118,8 +118,8 @@ int cmain()
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
     // Création des routes
-    Route routeA = Route(pointsA, 23, 5, 34, 16, switchesA);
-    Route routeB = Route(pointsB, 19, 1, 31, 13, switchesB);
+    Route routeA = Route(pointsA, 24, 23, 5, 33, 34, 16, switchesA);
+    Route routeB = Route(pointsB, 20, 19, 1, 30, 31, 13, switchesB);
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA);

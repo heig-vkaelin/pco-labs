@@ -4,12 +4,13 @@
 
 using namespace std;
 
-Route::Route(vector<int> route, int contactStartShared, int contactEndShared,
-             int contactStartSharedInversed, int contactEndSharedInversed,
+Route::Route(vector<int> route,
+             int contactRequestShared, int contactStartShared, int contactEndShared,
+             int contactRequestSharedInversed, int contactStartSharedInversed, int contactEndSharedInversed,
              vector<RailwaySwitch>& railwaySwitches)
     : route(route), railwaySwitches(railwaySwitches),
-      contactStartShared(contactStartShared), contactEndShared(contactEndShared),
-      contactStartSharedInversed(contactStartSharedInversed),
+      contactRequestShared(contactRequestShared), contactStartShared(contactStartShared), contactEndShared(contactEndShared),
+      contactRequestSharedInversed(contactRequestSharedInversed), contactStartSharedInversed(contactStartSharedInversed),
       contactEndSharedInversed(contactEndSharedInversed), inversed(false)
 {
     size_t size = route.size();
@@ -21,6 +22,10 @@ Route::Route(vector<int> route, int contactStartShared, int contactEndShared,
 
 int Route::getContact(int index) {
     return route.at(index);
+}
+
+int Route::getSectionRequest() {
+    return inversed ? contactRequestSharedInversed : contactRequestShared;
 }
 
 int Route::getSectionStart() {

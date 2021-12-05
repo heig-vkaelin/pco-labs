@@ -8,11 +8,14 @@ using RailwaySwitch = std::pair<int, int>;
 class Route
 {
 public:
-    Route(std::vector<int> route, int contactStartShared, int contactEndShared,
-          int contactStartSharedInversed, int contactEndSharedInversed,
+    Route(std::vector<int> route,
+          int contactRequestShared, int contactStartShared, int contactEndShared,
+          int contactRequestSharedInversed, int contactStartSharedInversed, int contactEndSharedInversed,
           std::vector<RailwaySwitch>& railwaySwitches);
 
     int getContact(int index);
+
+    int getSectionRequest();
 
     int getSectionStart();
 
@@ -28,11 +31,9 @@ private:
     std::vector<int> route;
     std::vector<std::pair<int, int>> railwaySwitches;
 
-    int contactStartShared;
-    int contactEndShared;
+    int contactRequestShared, contactStartShared, contactEndShared;
 
-    int contactStartSharedInversed;
-    int contactEndSharedInversed;
+    int contactRequestSharedInversed, contactStartSharedInversed, contactEndSharedInversed;
 
     int contactEndTurn;
 
