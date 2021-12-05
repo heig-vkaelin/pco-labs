@@ -18,7 +18,9 @@ void LocomotiveBehavior::run() {
     SharedSectionInterface::LocoId locoId = loco.numero() == 7 ?
                 SharedSectionInterface::LocoId::LA :
                 SharedSectionInterface::LocoId::LB;
-    SharedSectionInterface::EntryPoint entryPoint = SharedSectionInterface::EntryPoint::EA;
+    SharedSectionInterface::EntryPoint entryPoint = route.isInversed() ?
+                SharedSectionInterface::EntryPoint::EB :
+                SharedSectionInterface::EntryPoint::EA;
 
     int nbTurns = NB_TURNS;
     int contactIndex = 0;

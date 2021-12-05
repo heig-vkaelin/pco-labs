@@ -45,6 +45,10 @@ void Route::inverse() {
     std::reverse(route.begin(), route.end() - 1);
 }
 
+bool Route::isInversed() {
+    return inversed;
+}
+
 void Route::applyRailwaySwitches() {
     for(auto railwaySwitch : railwaySwitches) {
         diriger_aiguillage(railwaySwitch.first, railwaySwitch.second, 0);

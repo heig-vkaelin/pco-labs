@@ -25,6 +25,8 @@ public:
 
     void inverse();
 
+    bool isInversed();
+
     void applyRailwaySwitches();
 
 private:
