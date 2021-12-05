@@ -50,7 +50,7 @@ bool Route::isInversed() {
 }
 
 void Route::applyRailwaySwitches() {
-    for(auto railwaySwitch : railwaySwitches) {
+    for (RailwaySwitch railwaySwitch : railwaySwitches) {
         diriger_aiguillage(railwaySwitch.first, railwaySwitch.second, 0);
     }
 }

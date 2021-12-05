@@ -3,10 +3,9 @@
 
 #include <vector>
 
-using RailwaySwitch = std::pair<int, int>;
-
 class Route
 {
+    using RailwaySwitch = std::pair<int, int>;
 public:
     Route(std::vector<int> route,
           int contactRequestShared, int contactStartShared, int contactEndShared,
@@ -31,7 +30,7 @@ public:
 
 private:
     std::vector<int> route;
-    std::vector<std::pair<int, int>> railwaySwitches;
+    std::vector<RailwaySwitch> railwaySwitches;
 
     int contactRequestShared, contactStartShared, contactEndShared;
 

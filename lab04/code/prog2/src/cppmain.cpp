@@ -13,6 +13,8 @@
 #include "sharedsection.h"
 #include "route.h"
 
+using LocoId = SharedSectionInterface::LocoId;
+
 // Locomotives :
 // Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
 // Laissez les numéros des locos à 0 et 1 pour ce laboratoire
@@ -122,9 +124,9 @@ int cmain()
     Route routeB = Route(pointsB, 20, 19, 1, 30, 31, 13, switchesB);
 
     // Création du thread pour la loco 0
-    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA);
+    std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA, LocoId::LA);
     // Création du thread pour la loco 1
-    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB);
+    std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB, LocoId::LB);
 
     // Lanchement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));

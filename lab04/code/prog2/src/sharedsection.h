@@ -46,7 +46,7 @@ public:
         if (locoId == LocoId::LA) {
             locoARequest = true;
             locoAEntry = entryPoint;
-        } else {
+        } else if (locoId == LocoId::LB) {
             locoBRequest = true;
             locoBEntry = entryPoint;
         }
@@ -75,13 +75,14 @@ public:
             mutex.acquire();
             loco.demarrer();
         } else {
-            if (locoId == LocoId::LA) {
-                locoARequest = false;
-            } else if (locoId == LocoId::LB) {
-                locoBRequest = false;
-            }
+            occupied = true;
         }
-        occupied = true;
+
+        if (locoId == LocoId::LA) {
+            locoARequest = false;
+        } else if (locoId == LocoId::LB) {
+            locoBRequest = false;
+        }
 
         // afficher_message(qPrintable(QString("Fin get access loco %1").arg(loco.numero())));
         mutex.release();

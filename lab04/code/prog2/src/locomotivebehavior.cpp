@@ -15,19 +15,15 @@ void LocomotiveBehavior::run() {
     loco.afficherMessage("Ready!");
 
     /* A vous de jouer ! */
-    SharedSectionInterface::LocoId locoId = loco.numero() == 7 ?
-                SharedSectionInterface::LocoId::LA :
-                SharedSectionInterface::LocoId::LB;
-
+    EntryPoint entryPoint;
+    int contact;
     int nbTurns = NB_TURNS;
     int contactIndex = 0;
 
     while(true) {
-        SharedSectionInterface::EntryPoint entryPoint = route.isInversed() ?
-                    SharedSectionInterface::EntryPoint::EB :
-                    SharedSectionInterface::EntryPoint::EA;
+        entryPoint = route.isInversed() ? EntryPoint::EB : EntryPoint::EA;
 
-        int contact = route.getContact(contactIndex);
+        contact = route.getContact(contactIndex);
         attendre_contact(contact);
         loco.afficherMessage(QString("Contact passé: ").append(QString::number(contact)));
 

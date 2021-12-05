@@ -19,13 +19,15 @@
  */
 class LocomotiveBehavior : public Launchable
 {
+    using LocoId = SharedSectionInterface::LocoId;
+    using EntryPoint = SharedSectionInterface::EntryPoint;
 public:
     /*!
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
      */
-    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, Route& route)
-        : loco(loco), sharedSection(sharedSection), route(route) {
+    LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, Route& route, LocoId locoId)
+        : loco(loco), sharedSection(sharedSection), route(route), locoId(locoId) {
         // Eventuel code supplémentaire du constructeur
     }
 
@@ -63,6 +65,8 @@ protected:
     void inverse();
 
     Route& route;
+
+    LocoId locoId;
 };
 
 #endif // LOCOMOTIVEBEHAVIOR_H
