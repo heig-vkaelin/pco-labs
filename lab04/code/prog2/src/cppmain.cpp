@@ -20,7 +20,7 @@
 // Locomotive A
 static Locomotive locoA(7 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 // Locomotive B
-static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 12 /* Vitesse */);
+static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 
 //Arret d'urgence
 void emergency_stop()
@@ -87,7 +87,7 @@ int cmain()
 
     // Loco 1
     // Exemple de position de départ
-    locoB.fixerPosition(22, 28);
+    locoB.fixerPosition(20, 21);
 
     /***********
      * Message *
@@ -98,7 +98,7 @@ int cmain()
 
     // Création des parcours
     std::vector<int> pointsA = {25, 24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 32};
-    std::vector<int> pointsB = {22, 21, 20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28};
+    std::vector<int> pointsB = {20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28, 22, 21};
     std::vector<RailwaySwitch> switchesA = {
         {10, DEVIE},
         {2, DEVIE},

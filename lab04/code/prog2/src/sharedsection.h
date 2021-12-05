@@ -29,9 +29,9 @@ public:
      * @brief SharedSection Constructeur de la classe qui représente la section partagée.
      * Initialisez vos éventuels attributs ici, sémaphores etc.
      */
-    SharedSection() : mutex(1), waiting(0), occupied(false), nbWaiting(0), hasBeenRequested(false), priorities(2) {
-        priorities[(int)LocoId::LA] = -1;
-        priorities[(int)LocoId::LB] = -1;
+    SharedSection() : mutex(1), waiting(0), occupied(false), nbWaiting(0), hasBeenRequested(false), priorityAccessAsked(false), priorities(2) {
+        priorities[(int)LocoId::LA] = Priority::NONE;
+        priorities[(int)LocoId::LB] = Priority::NONE;
     }
 
     /**
@@ -42,7 +42,9 @@ public:
      * @param entryPoint Le point d'entree de la locomotive qui fait l'appel
      */
     void request(Locomotive& loco, LocoId locoId, EntryPoint entryPoint) override {
+        afficher_message(qPrintable(QString("The engine no. %1 requested the shared section.").arg(loco.numero())));
         mutex.acquire();
+
         if (!hasBeenRequested) {
             hasBeenRequested = true;
             requested = {locoId, entryPoint};
@@ -53,20 +55,26 @@ public:
         // Même point d'entrée
         if (requested.second == entryPoint) {
             // priorities[(int)locoId] = locoId == LocoId::LA ? 1 : 0;
-            priorities[(int)LocoId::LA] = 1;
-            priorities[(int)LocoId::LB] = 0;
+            priorities[(int)LocoId::LA] = Priority::HIGH;
+            priorities[(int)LocoId::LB] = Priority::LOW;
+
+            //if(locoId == LocoId::LA)
+             //   priorityAccessAsked = true;
+
         }
         // Point d'entrée différent
         else {
             // priorities[(int)locoId] = locoId == LocoId::LB ? 1 : 0;
-            priorities[(int)LocoId::LA] = 0;
-            priorities[(int)LocoId::LB] = 1;
+            priorities[(int)LocoId::LA] = Priority::LOW;
+            priorities[(int)LocoId::LB] = Priority::HIGH;
+
+            //if(locoId == LocoId::LB)
+             //   priorityAccessAsked = true;
         }
+        priorityAccessAsked = true;
+        //requested = {locoId, entryPoint};
         hasBeenRequested = false;
         mutex.release();
-
-        // Exemple de message dans la console globale
-        afficher_message(qPrintable(QString("The engine no. %1 requested the shared section.").arg(loco.numero())));
     }
 
     /**
@@ -79,8 +87,11 @@ public:
      * @param locoId L'identidiant de la locomotive qui fait l'appel
      */
     void getAccess(Locomotive &loco, LocoId locoId) override {
+        afficher_message(qPrintable(QString("The engine no. %1 accesses the shared section.").arg(loco.numero())));
         mutex.acquire();
-        if (occupied || (hasBeenRequested && priorities[(int)locoId] != 1)) {
+        afficher_message(qPrintable(QString("occupied %1").arg(occupied)));
+        afficher_message(qPrintable(QString("priority acces asked %1").arg(priorityAccessAsked)));
+        if (occupied || (priorityAccessAsked && priorities[(int)locoId] != Priority::HIGH)) {
             nbWaiting++;
             loco.arreter();
             mutex.release();
@@ -89,15 +100,15 @@ public:
             mutex.acquire();
             occupied = true;
             loco.demarrer();
-            mutex.release();
         } else {
             occupied = true;
-            hasBeenRequested = false;
-            mutex.release();
         }
 
-        // Exemple de message dans la console globale
-        afficher_message(qPrintable(QString("The engine no. %1 accesses the shared section.").arg(loco.numero())));
+        //if (priorities[(int)locoId] == Priority::HIGH)
+        hasBeenRequested = false;
+        priorityAccessAsked = false;
+        afficher_message(qPrintable(QString("Fin get access loco %1").arg(loco.numero())));
+        mutex.release();
     }
 
     /**
@@ -107,7 +118,11 @@ public:
      * @param locoId L'identidiant de la locomotive qui fait l'appel
      */
     void leave(Locomotive& loco, LocoId locoId) override {
+        afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
         mutex.acquire();
+
+        // priorities[(int)locoId] = Priority::NONE;
+
         if (nbWaiting == 0) {
             occupied = false;
             mutex.release();
@@ -116,12 +131,6 @@ public:
             mutex.release();
             waiting.release();
         }
-        mutex.acquire();
-        priorities[(int)locoId] = -1;
-        mutex.release();
-
-        // Exemple de message dans la console globale
-        afficher_message(qPrintable(QString("The engine no. %1 leaves the shared section.").arg(loco.numero())));
     }
 
     /* A vous d'ajouter ce qu'il vous faut */
@@ -133,9 +142,15 @@ private:
     bool occupied;
     int nbWaiting;
 
+    enum class Priority {
+        NONE,
+        LOW,
+        HIGH
+    };
 
     bool hasBeenRequested;
-    std::vector<int> priorities;
+    bool priorityAccessAsked;
+    std::vector<Priority> priorities;
     std::pair<LocoId, EntryPoint> requested;
 };
 
