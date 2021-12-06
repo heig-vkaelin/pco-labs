@@ -25,7 +25,7 @@ void LocomotiveBehavior::run() {
 
         contact = route.getContact(contactIndex);
         attendre_contact(contact);
-        loco.afficherMessage(QString("Contact passé: ").append(QString::number(contact)));
+        // loco.afficherMessage(QString("Contact passé: ").append(QString::number(contact)));
 
         contactIndex++;
 

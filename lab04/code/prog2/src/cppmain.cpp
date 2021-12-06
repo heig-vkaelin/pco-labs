@@ -14,6 +14,7 @@
 #include "route.h"
 
 using LocoId = SharedSectionInterface::LocoId;
+using RailwaySwitch = std::pair<int, int>;
 
 // Locomotives :
 // Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
