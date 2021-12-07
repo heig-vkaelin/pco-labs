@@ -16,37 +16,33 @@ void LocomotiveBehavior::run() {
 
     /* A vous de jouer ! */
     EntryPoint entryPoint;
-    int contact;
     int nbTurns = NB_TURNS;
-    int contactIndex = 0;
 
     while(true) {
         entryPoint = route.isInversed() ? EntryPoint::EB : EntryPoint::EA;
 
-        contact = route.getContact(contactIndex);
-        attendre_contact(contact);
-        // loco.afficherMessage(QString("Contact passé: ").append(QString::number(contact)));
+        // Request section partagée
+        attendre_contact(route.getSectionRequest());
+        sharedSection->request(loco, locoId, entryPoint);
+        loco.afficherMessage("Demande d'entrée en trançon partagé!");
 
-        contactIndex++;
+        // Accès section partagée
+        attendre_contact(route.getSectionStart());
+        sharedSection->getAccess(loco, locoId);
+        route.applyRailwaySwitches();
+        loco.afficherMessage("Entrée trançon partagé!");
 
-        if (contact == route.getSectionRequest()){
-            sharedSection->request(loco, locoId, entryPoint);
-            loco.afficherMessage("Demande d'entrée en trançon partagé!");
-        }
-        if (contact == route.getSectionStart()) {
-            sharedSection->getAccess(loco, locoId);
-            route.applyRailwaySwitches();
-            loco.afficherMessage("Entrée trançon partagé!");
-        } else if (contact == route.getSectionEnd()) {
-            sharedSection->leave(loco, locoId);
-            loco.afficherMessage("Sortie trançon partagé!");
-        } else if (contact == route.getTurnEnd()) {
-            nbTurns--;
-            if (!nbTurns) {
-                inverse();
-                nbTurns = NB_TURNS;
-            }
-            contactIndex = 0;
+        // Sortie section partagée
+        attendre_contact(route.getSectionEnd());
+        sharedSection->leave(loco, locoId);
+        loco.afficherMessage("Sortie trançon partagé!");
+
+        // Fin du tour
+        attendre_contact(route.getTurnEnd());
+        nbTurns--;
+        if (!nbTurns) {
+            inverse();
+            nbTurns = NB_TURNS;
         }
     }
 

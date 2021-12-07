@@ -7,12 +7,8 @@ class Route
 {
     using RailwaySwitch = std::pair<int, int>;
 public:
-    Route(std::vector<int> route,
-          int contactRequestShared, int contactStartShared, int contactEndShared,
-          int contactRequestSharedInversed, int contactStartSharedInversed, int contactEndSharedInversed,
-          std::vector<RailwaySwitch>& railwaySwitches);
-
-    int getContact(int index);
+    Route(const std::vector<int>& route, const std::vector<int>& shared,
+          const std::vector<RailwaySwitch>& railwaySwitches);
 
     int getSectionRequest();
 
@@ -29,7 +25,6 @@ public:
     void applyRailwaySwitches();
 
 private:
-    std::vector<int> route;
     std::vector<RailwaySwitch> railwaySwitches;
 
     int contactRequestShared, contactStartShared, contactEndShared;

@@ -4,23 +4,27 @@
 
 using namespace std;
 
-Route::Route(vector<int> route, int contactStartShared, int contactEndShared,
-             int contactStartSharedInversed, int contactEndSharedInversed,
-             vector<RailwaySwitch>& railwaySwitches)
-    : route(route), railwaySwitches(railwaySwitches),
-      contactStartShared(contactStartShared), contactEndShared(contactEndShared),
-      contactStartSharedInversed(contactStartSharedInversed),
-      contactEndSharedInversed(contactEndSharedInversed), inversed(false)
+Route::Route(const vector<int>& route, const vector<int>& shared,
+             const vector<RailwaySwitch>& railwaySwitches)
+    : railwaySwitches(railwaySwitches), inversed(false)
 {
-    size_t size = route.size();
-    if (size < 0)
-        throw runtime_error("Le parcours ne peut pas être vide!");
+    if (!route.size() || !shared.size())
+        throw runtime_error("Le parcours et la section partagée ne peuvent pas être vides!");
 
-    contactEndTurn = route.at(size - 1);
-}
+    contactEndTurn = route.at(route.size() - 1);
 
-int Route::getContact(int index) {
-    return route.at(index);
+    auto sectionStart = std::find(route.begin(), route.end(), shared.at(0));
+    auto sectionEnd = std::find(route.begin(), route.end(), shared.at(shared.size() - 1));
+
+    // Problème: la section partagée n'est pas dans le parcours de la loco
+    if (sectionStart == route.end() || sectionEnd == route.end())
+        throw runtime_error("Le parcours ne contient pas la section partagée!");
+
+    contactStartShared = *std::prev(sectionStart, 2);
+    contactEndShared = *std::next(sectionEnd, 1);
+
+    contactStartSharedInversed = *std::next(sectionEnd, 2);
+    contactEndSharedInversed = *std::prev(sectionStart, 1);
 }
 
 int Route::getSectionStart() {
@@ -37,7 +41,6 @@ int Route::getTurnEnd() {
 
 void Route::inverse() {
     inversed = !inversed;
-    std::reverse(route.begin(), route.end() - 1);
 }
 
 void Route::applyRailwaySwitches() {

@@ -102,6 +102,9 @@ int cmain()
     // Création des parcours
     std::vector<int> pointsA = {25, 24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 32};
     std::vector<int> pointsB = {20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28, 22, 21};
+    std::vector<int> shared = {15, 14, 7, 6};
+
+    // Aiguillages
     std::vector<RailwaySwitch> switchesA = {
         {10, DEVIE},
         {2, DEVIE},
@@ -121,8 +124,8 @@ int cmain()
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
     // Création des routes
-    Route routeA = Route(pointsA, 24, 23, 5, 33, 34, 16, switchesA);
-    Route routeB = Route(pointsB, 20, 19, 1, 30, 31, 13, switchesB);
+    Route routeA = Route(pointsA, shared, switchesA);
+    Route routeB = Route(pointsB, shared, switchesB);
 
     // Création du thread pour la loco 0
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA, LocoId::LA);

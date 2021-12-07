@@ -15,28 +15,25 @@ void LocomotiveBehavior::run() {
     loco.afficherMessage("Ready!");
 
     int nbTurns = NB_TURNS;
-    int contactIndex = 0;
 
-    while(true) {
-        int contact = route.getContact(contactIndex);
-        attendre_contact(contact);
+    while(true) {        
+        // Début section partagée
+        attendre_contact(route.getSectionStart());
+        sharedSection->access(loco);
+        route.applyRailwaySwitches();
+        loco.afficherMessage("Entrée trançon partagé!");
 
-        contactIndex++;
+        // Fin section partagée
+        attendre_contact(route.getSectionEnd());
+        sharedSection->leave(loco);
+        loco.afficherMessage("Sortie trançon partagé!");
 
-        if (contact == route.getSectionStart()) {
-            sharedSection->access(loco);
-            route.applyRailwaySwitches();
-            loco.afficherMessage("Entrée trançon partagé!");
-        } else if (contact == route.getSectionEnd()) {
-            sharedSection->leave(loco);
-            loco.afficherMessage("Sortie trançon partagé!");
-        } else if (contact == route.getTurnEnd()) {
-            nbTurns--;
-            if (!nbTurns) {
-                inverse();
-                nbTurns = NB_TURNS;
-            }
-            contactIndex = 0;
+        // Fin d'un tour
+        attendre_contact(route.getTurnEnd());
+        nbTurns--;
+        if (!nbTurns) {
+            inverse();
+            nbTurns = NB_TURNS;
         }
     }
 }
