@@ -3,7 +3,7 @@
 //  / ___/ /__/ /_/ / / __// // / __/ / /  //
 // /_/   \___/\____/ /____/\___/____//_/   //
 //                                         //
-
+// Auteurs: Valentin Kaelin & Lazar Pavicevic
 
 #include "ctrain_handler.h"
 
@@ -131,7 +131,7 @@ int cmain()
     // Création du thread pour la loco B
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB, LocoId::LB);
 
-    // Lanchement des threads
+    // Lancement des threads
     afficher_message(qPrintable(QString("Lancement thread loco A (numéro %1)").arg(locoA.numero())));
     locoBehaveA->startThread();
     afficher_message(qPrintable(QString("Lancement thread loco B (numéro %1)").arg(locoB.numero())));
@@ -141,7 +141,7 @@ int cmain()
     locoBehaveA->join();
     locoBehaveB->join();
 
-    //Fin de la simulation
+    // Fin de la simulation
     mettre_maquette_hors_service();
 
     return EXIT_SUCCESS;

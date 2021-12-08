@@ -3,7 +3,7 @@
 //  / ___/ /__/ /_/ / / __// // / __/ / /  //
 // /_/   \___/\____/ /____/\___/____//_/   //
 //                                         //
-
+// Auteurs: Valentin Kaelin & Lazar Pavicevic
 
 #ifndef SHAREDSECTION_H
 #define SHAREDSECTION_H
@@ -77,6 +77,7 @@ public:
             occupied = true;
         }
 
+        // La requête d'accès est terminée car la loco a maintenant accès
         if (locoId == LocoId::LA) {
             locoARequest = false;
         } else if (locoId == LocoId::LB) {
@@ -101,8 +102,6 @@ public:
             occupied = false;
         } else {
             nbWaiting--;
-            locoARequest = false;
-            locoBRequest = false;
             waiting.release();
         }
         mutex.release();
@@ -119,8 +118,11 @@ private:
     bool canAccess(LocoId locoId) {
         if (occupied) return false;
 
+        // Si une seule loco a fait une requête: elle a l'accès
         if (!locoARequest || !locoBRequest) return true;
 
+        // Si les deux locos ont fait une requête, on regarde les points d'entrée
+        // afin d'appliquer les règles de priorité
         return locoId == LocoId::LA ? locoAEntry == locoBEntry : locoAEntry != locoBEntry;
     }
 };
