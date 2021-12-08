@@ -64,7 +64,6 @@ public:
      * @param locoId L'identidiant de la locomotive qui fait l'appel
      */
     void getAccess(Locomotive &loco, LocoId locoId) override {
-        afficher_message(qPrintable(QString("The engine no. %1 accesses the shared section.").arg(loco.numero())));
         mutex.acquire();
         if (!canAccess(locoId)) {
             nbWaiting++;
@@ -84,7 +83,7 @@ public:
             locoBRequest = false;
         }
 
-        // afficher_message(qPrintable(QString("Fin get access loco %1").arg(loco.numero())));
+        afficher_message(qPrintable(QString("The engine no. %1 accesses the shared section.").arg(loco.numero())));
         mutex.release();
     }
 
@@ -109,11 +108,7 @@ public:
         mutex.release();
     }
 
-    /* A vous d'ajouter ce qu'il vous faut */
-
 private:
-    // Méthodes privées ...
-    // Attributes privés ...
     PcoSemaphore mutex, waiting;
     bool occupied;
     int nbWaiting;
@@ -126,16 +121,8 @@ private:
 
         if (!locoARequest || !locoBRequest) return true;
 
-        /*
-        afficher_message(qPrintable(QString("locoARequest %1 locoBRequest %2")
-                                    .arg(locoARequest).arg(locoBRequest)));
-        afficher_message(qPrintable(QString("locoAEntry %1 locoBEntry %2")
-                                    .arg((int)locoAEntry).arg((int)locoBEntry)));
-        */
-
         return locoId == LocoId::LA ? locoAEntry == locoBEntry : locoAEntry != locoBEntry;
     }
 };
-
 
 #endif // SHAREDSECTION_H

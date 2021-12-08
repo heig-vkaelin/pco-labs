@@ -12,6 +12,7 @@
 #include "sharedsectioninterface.h"
 #include "route.h"
 
+// Nombre de tours avant d'inverser le sens de la locomotive
 #define NB_TURNS 2
 
 /**
@@ -25,10 +26,12 @@ public:
     /*!
      * \brief locomotiveBehavior Constructeur de la classe
      * \param loco la locomotive dont on représente le comportement
+     * \param sharedSection la section partagée entre les différentes locomotives
+     * \param route parcours de la locomotive
+     * \param locoId id de la locomotive
      */
     LocomotiveBehavior(Locomotive& loco, std::shared_ptr<SharedSectionInterface> sharedSection, Route& route, LocoId locoId)
         : loco(loco), sharedSection(sharedSection), route(route), locoId(locoId) {
-        // Eventuel code supplémentaire du constructeur
     }
 
 protected:
@@ -57,15 +60,19 @@ protected:
      */
     std::shared_ptr<SharedSectionInterface> sharedSection;
 
-    /*
-     * Vous êtes libres d'ajouter des méthodes ou attributs
-     *
-     * Par exemple la priorité ou le parcours
+    /**
+     * @brief inverse Arrête la locomotive, inverse son sens et la redémarre
      */
     void inverse();
 
+    /**
+     * @brief route Parcours de la locomotive
+     */
     Route& route;
 
+    /**
+     * @brief locoId Id de la locomotive
+     */
     LocoId locoId;
 };
 

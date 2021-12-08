@@ -4,7 +4,6 @@
 // /_/   \___/\____/ /____/\___/____//_/   //
 //                                         //
 
-
 #include "locomotivebehavior.h"
 #include "ctrain_handler.h"
 
@@ -14,12 +13,11 @@ void LocomotiveBehavior::run() {
     loco.demarrer();
     loco.afficherMessage("Ready!");
 
-    /* A vous de jouer ! */
     EntryPoint entryPoint = EntryPoint::EA;
     int nbTurns = NB_TURNS;
 
     while(true) {
-        // Request section partagée
+        // Requête section partagée
         attendre_contact(route.getSectionRequest());
         sharedSection->request(loco, locoId, entryPoint);
         loco.afficherMessage("Demande d'entrée en tronçon partagé!");
@@ -35,7 +33,7 @@ void LocomotiveBehavior::run() {
         sharedSection->leave(loco, locoId);
         loco.afficherMessage("Sortie tronçon partagé!");
 
-        // Fin du tour
+        // Fin d'un tour
         attendre_contact(route.getTurnEnd());
         nbTurns--;
         if (!nbTurns) {

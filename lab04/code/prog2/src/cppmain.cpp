@@ -17,15 +17,12 @@ using LocoId = SharedSectionInterface::LocoId;
 using RailwaySwitch = std::pair<int, int>;
 
 // Locomotives :
-// Vous pouvez changer les vitesses initiales, ou utiliser la fonction loco.fixerVitesse(vitesse);
-// Laissez les numéros des locos à 0 et 1 pour ce laboratoire
-
 // Locomotive A
 static Locomotive locoA(7 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 // Locomotive B
 static Locomotive locoB(42 /* Numéro (pour commande trains sur maquette réelle) */, 10 /* Vitesse */);
 
-//Arret d'urgence
+// Arret d'urgence
 void emergency_stop()
 {
     locoA.arreter();
@@ -35,14 +32,14 @@ void emergency_stop()
 }
 
 
-//Fonction principale
+// Fonction principale
 int cmain()
 {
     /************
      * Maquette *
      ************/
 
-    //Choix de la maquette (A ou B)
+    // Choix de la maquette (A ou B)
     selection_maquette(MAQUETTE_A);
 
     /**********************************
@@ -54,7 +51,7 @@ int cmain()
     // Vous devrez utiliser cette fonction pour la section partagée pour aiguiller les locos
     // sur le bon parcours (par exemple à la sortie de la section partagée) vous pouvez l'
     // appeler depuis vos thread des locos par ex.
-    diriger_aiguillage(1,  DEVIE     , 0); // modif ici
+    diriger_aiguillage(1,  DEVIE     , 0);
     diriger_aiguillage(2,  DEVIE     , 0);
     diriger_aiguillage(3,  DEVIE     , 0);
     diriger_aiguillage(4,  TOUT_DROIT, 0);
@@ -84,12 +81,10 @@ int cmain()
      * Position de départ des locos *
      ********************************/
 
-    // Loco 0
-    // Exemple de position de départ
+    // Loco A
     locoA.fixerPosition(25, 32);
 
-    // Loco 1
-    // Exemple de position de départ
+    // Loco B
     locoB.fixerPosition(20, 21);
 
     /***********
@@ -99,7 +94,11 @@ int cmain()
     // Affiche un message dans la console de l'application graphique
     afficher_message("Hit play to start the simulation...");
 
-    // Création des parcours
+    /**********************
+     * Parcours des locos *
+     **********************/
+
+    // Création des points du parcours
     std::vector<int> pointsA = {25, 24, 23, 16, 15, 14, 7, 6, 5, 34, 33, 32};
     std::vector<int> pointsB = {20, 19, 13, 15, 14, 7, 6, 1, 31, 30, 29, 28, 22, 21};
     std::vector<int> shared = {15, 14, 7, 6};
@@ -116,6 +115,10 @@ int cmain()
         {9, TOUT_DROIT},
     };
 
+    // Création des routes
+    Route routeA = Route(pointsA, shared, switchesA);
+    Route routeB = Route(pointsB, shared, switchesB);
+
     /*********************
      * Threads des locos *
      ********************/
@@ -123,13 +126,9 @@ int cmain()
     // Création de la section partagée
     std::shared_ptr<SharedSectionInterface> sharedSection = std::make_shared<SharedSection>();
 
-    // Création des routes
-    Route routeA = Route(pointsA, shared, switchesA);
-    Route routeB = Route(pointsB, shared, switchesB);
-
-    // Création du thread pour la loco 0
+    // Création du thread pour la loco A
     std::unique_ptr<Launchable> locoBehaveA = std::make_unique<LocomotiveBehavior>(locoA, sharedSection, routeA, LocoId::LA);
-    // Création du thread pour la loco 1
+    // Création du thread pour la loco B
     std::unique_ptr<Launchable> locoBehaveB = std::make_unique<LocomotiveBehavior>(locoB, sharedSection, routeB, LocoId::LB);
 
     // Lanchement des threads

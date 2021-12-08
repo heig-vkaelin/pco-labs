@@ -1,3 +1,12 @@
+/**
+  \file route.cpp
+  \author Valentin Kaelin & Lazar Pavicevic
+  \date 12.12.2021
+  \brief Implémentation de la classe Route représentant le parcours d'une locomotive.
+  Les points de contacts utilisés pour le tronçon partagé sont calculés à partir
+  des points du parcours de la locomotive et ceux de la section partagée.
+*/
+
 #include <algorithm>
 #include "ctrain_handler.h"
 #include "route.h"
@@ -11,6 +20,7 @@ Route::Route(const vector<int>& route, const vector<int>& shared,
     if (!route.size() || !shared.size())
         throw runtime_error("Le parcours et la section partagée ne peuvent pas être vides!");
 
+    // Fin d'un tour
     contactEndTurn = route.at(route.size() - 1);
 
     auto sectionStart = find(route.begin(), route.end(), shared.at(0));
