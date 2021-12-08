@@ -25,7 +25,7 @@ Route::Route(const vector<int>& route, const vector<int>& shared,
     contactStartShared = *prev(sectionStart, 2);
     contactEndShared = *next(sectionEnd, 1);
 
-    // Send inversé
+    // Sens inversé
     contactRequestSharedInversed = *next(sectionEnd, 3);
     contactStartSharedInversed = *next(sectionEnd, 2);
     contactEndSharedInversed = *prev(sectionStart, 1);

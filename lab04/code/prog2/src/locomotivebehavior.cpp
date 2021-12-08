@@ -15,33 +15,32 @@ void LocomotiveBehavior::run() {
     loco.afficherMessage("Ready!");
 
     /* A vous de jouer ! */
-    EntryPoint entryPoint;
+    EntryPoint entryPoint = EntryPoint::EA;
     int nbTurns = NB_TURNS;
 
     while(true) {
-        entryPoint = route.isInversed() ? EntryPoint::EB : EntryPoint::EA;
-
         // Request section partagée
         attendre_contact(route.getSectionRequest());
         sharedSection->request(loco, locoId, entryPoint);
-        loco.afficherMessage("Demande d'entrée en trançon partagé!");
+        loco.afficherMessage("Demande d'entrée en tronçon partagé!");
 
         // Accès section partagée
         attendre_contact(route.getSectionStart());
         sharedSection->getAccess(loco, locoId);
         route.applyRailwaySwitches();
-        loco.afficherMessage("Entrée trançon partagé!");
+        loco.afficherMessage("Entrée tronçon partagé!");
 
         // Sortie section partagée
         attendre_contact(route.getSectionEnd());
         sharedSection->leave(loco, locoId);
-        loco.afficherMessage("Sortie trançon partagé!");
+        loco.afficherMessage("Sortie tronçon partagé!");
 
         // Fin du tour
         attendre_contact(route.getTurnEnd());
         nbTurns--;
         if (!nbTurns) {
             inverse();
+            entryPoint = route.isInversed() ? EntryPoint::EB : EntryPoint::EA;
             nbTurns = NB_TURNS;
         }
     }
