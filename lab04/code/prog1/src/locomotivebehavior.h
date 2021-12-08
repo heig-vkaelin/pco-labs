@@ -3,6 +3,7 @@
 //  / ___/ /__/ /_/ / / __// // / __/ / /  //
 // /_/   \___/\____/ /____/\___/____//_/   //
 //
+// Auteurs: Valentin Kaelin & Lazar Pavicevic
 
 #ifndef LOCOMOTIVEBEHAVIOR_H
 #define LOCOMOTIVEBEHAVIOR_H

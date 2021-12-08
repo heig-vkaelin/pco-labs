@@ -1,3 +1,12 @@
+/**
+  \file route.cpp
+  \author Valentin Kaelin & Lazar Pavicevic
+  \date 12.12.2021
+  \brief Implémentation de la classe Route représentant le parcours d'une locomotive.
+  Les points de contacts utilisés pour le tronçon partagé sont calculés à partir
+  des points du parcours de la locomotive et ceux de la section partagée.
+*/
+
 #include <algorithm>
 #include "ctrain_handler.h"
 #include "route.h"

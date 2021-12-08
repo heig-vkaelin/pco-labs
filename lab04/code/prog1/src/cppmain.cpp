@@ -3,6 +3,7 @@
 //  / ___/ /__/ /_/ / / __// // / __/ / /  //
 // /_/   \___/\____/ /____/\___/____//_/   //
 //
+// Auteurs: Valentin Kaelin & Lazar Pavicevic
 
 #include "ctrain_handler.h"
 
@@ -25,6 +26,8 @@ void emergency_stop()
 {
     locoA.arreter();
     locoB.arreter();
+    locoA.fixerVitesse(0);
+    locoB.fixerVitesse(0);
 
     afficher_message("\nSTOP!");
 }
