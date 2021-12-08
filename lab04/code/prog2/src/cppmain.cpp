@@ -27,6 +27,8 @@ void emergency_stop()
 {
     locoA.arreter();
     locoB.arreter();
+    locoA.fixerVitesse(0);
+    locoB.fixerVitesse(0);
 
     afficher_message("\nSTOP!");
 }
