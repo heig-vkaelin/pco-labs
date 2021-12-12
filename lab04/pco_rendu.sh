@@ -6,7 +6,7 @@ PROJECT_DIR=code
 PROJECT_FILE=QtrainSimStudent.pro
 PROG1_DIR=${PROJECT_DIR}/prog1
 PROG2_DIR=${PROJECT_DIR}/prog2
-REPORT_FILE=rendu.pdf
+REPORT_FILE=rapport.pdf
 ARCHIVE=rendu.tar.gz
 
 cd $SCRIPTPATH
