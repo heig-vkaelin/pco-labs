@@ -43,11 +43,17 @@ public:
         // TODO
         mutex.lock();
         //if (nbWaiting > 0) {
-        cond.notifyOne();
+
+        if (nbCurrentPeople > 0) {
+            cond.notifyOne();
+            nbCurrentPeople--;
+        }
+
+
         //} else {
         //    nbCurrentPeople--;
         //}
-        nbCurrentPeople--;
+
 
         mutex.unlock();
     }
