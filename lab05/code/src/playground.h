@@ -11,7 +11,7 @@ public:
     /// \param nbKidsToLeave Nombre d'enfants permettant de relâcher la moitié d'entre eux
     ///
     Playground(unsigned int nbKidsToLeave) : initialNbKidsToLeave(nbKidsToLeave),
-        nbKidsToLeave(nbKidsToLeave)
+        nbKidsToLeave(nbKidsToLeave), nbKidsToFree(nbKidsToLeave / 2)
     {
         // TODO
     }
@@ -31,17 +31,20 @@ public:
         if (nbKidsToLeave > 0) {
             wait(cond);
         }
-        signal(cond);
+        nbKidsToFree--;
+        if(nbKidsToFree > 0)
+            signal(cond);
 
         // On le fait pour chaque kid...
         nbKidsToLeave = initialNbKidsToLeave;
-
+        nbKidsToFree = initialNbKidsToLeave / 2;
         monitorOut();
     }
 
 private:
     unsigned initialNbKidsToLeave;
     unsigned nbKidsToLeave;
+    unsigned nbKidsToFree;
     Condition cond;
 };
 
