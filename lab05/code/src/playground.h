@@ -10,7 +10,8 @@ public:
     /// \brief Constructeur
     /// \param nbKidsToLeave Nombre d'enfants permettant de relâcher la moitié d'entre eux
     ///
-    Playground(unsigned int nbKidsToLeave)
+    Playground(unsigned int nbKidsToLeave) : initialNbKidsToLeave(nbKidsToLeave),
+        nbKidsToLeave(nbKidsToLeave)
     {
         // TODO
     }
@@ -25,9 +26,23 @@ public:
     void play()
     {
         // TODO
+        monitorIn();
+        nbKidsToLeave--;
+        if (nbKidsToLeave > 0) {
+            wait(cond);
+        }
+        signal(cond);
+
+        // On le fait pour chaque kid...
+        nbKidsToLeave = initialNbKidsToLeave;
+
+        monitorOut();
     }
 
 private:
+    unsigned initialNbKidsToLeave;
+    unsigned nbKidsToLeave;
+    Condition cond;
 };
 
 #endif // PLAYGROUND_H
