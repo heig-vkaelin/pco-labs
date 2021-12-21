@@ -1,3 +1,5 @@
+// Auteurs: Valentin Kaelin & Alexandre Jaquier
+
 #ifndef PLACE_H
 #define PLACE_H
 
@@ -25,7 +27,9 @@ public:
     ///
     void access(Kid &kid)
     {
+        // Permet de savoir si l'enfant doit appeller la fonction startWaiting ou non
         bool hasAlreadyWait = false;
+
         mutex.lock();
         while (nbCurrentPeople == nbMaxPeople) {
             if (!hasAlreadyWait) {
@@ -34,6 +38,7 @@ public:
                 mutex.lock();
             }
 
+            // On revérifie la condition
             if (nbCurrentPeople == nbMaxPeople) {
                 cond.wait(&mutex);
             }

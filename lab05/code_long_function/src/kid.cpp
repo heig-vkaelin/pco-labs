@@ -40,11 +40,12 @@ void Kid::run() {
 void Kid::startWaiting()
 {
     gui_interface->consoleAppendText(id, QString("Kid %1 waits").arg(id));
-    PcoThread::usleep(3000000);
-    gui_interface->consoleAppendText(id, QString("Kid %1 end sleep waits").arg(id));
+    // Afin de simuler une exécution très lente
+    // PcoThread::usleep(3000000);
 }
 
 void Kid::endWaiting()
 {
     gui_interface->consoleAppendText(id, QString("Kid %1 end waiting").arg(id));
+    // PcoThread::usleep(3000000);
 }

@@ -1,3 +1,5 @@
+// Auteurs: Valentin Kaelin & Alexandre Jaquier
+
 #ifndef PLAYGROUND_H
 #define PLAYGROUND_H
 
@@ -33,7 +35,7 @@ public:
         nbKidsWaiting++;
         if (nbKidsWaiting == nbKidsToLeave) {
             nbKidsWaiting -= nbKidsToFree;
-            nbKidsReleased = nbKidsToFree;
+            nbKidsReleased = nbKidsToFree; // permet de savoir le nombre d'enfants libérés
             for (unsigned i = 0; i < nbKidsToFree; ++i)
                 signal(cond);
         }

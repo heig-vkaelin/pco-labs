@@ -11,7 +11,7 @@
 
 
 constexpr int NBSTEPS = 4;
-constexpr int NBKIDS = 6;
+constexpr int NBKIDS = 15;
 
 int main(int argc, char *argv[])
 {

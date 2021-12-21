@@ -1,3 +1,5 @@
+// Auteurs: Valentin Kaelin & Alexandre Jaquier
+
 #ifndef PLACE_H
 #define PLACE_H
 

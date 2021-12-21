@@ -1,3 +1,5 @@
+// Auteurs: Valentin Kaelin & Alexandre Jaquier
+
 #ifndef PLAYGROUND_H
 #define PLAYGROUND_H
 
