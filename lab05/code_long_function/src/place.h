@@ -13,11 +13,8 @@ public:
     /// \brief Constructeur
     /// \param nbMaxPeople Nombre maximal de personnes sur cet emplacement
     ///
-    Place(unsigned int nbMaxPeople): nbMaxPeople(nbMaxPeople), nbWaiting(0),
-        nbCurrentPeople(0), mutex(), cond()
-    {
-
-    }
+    Place(unsigned int nbMaxPeople): nbMaxPeople(nbMaxPeople),
+        nbCurrentPeople(0), mutex(), cond() {}
 
     ///
     /// \brief Fonction permettant de gérer l'accès à l'emplacement.
@@ -28,15 +25,17 @@ public:
     ///
     void access(Kid &kid)
     {
-        // TODO
         mutex.lock();
-        //nbWaiting++;
         while (nbCurrentPeople == nbMaxPeople) {
+            mutex.unlock();
             kid.startWaiting();
+            mutex.lock();
+
             cond.wait(&mutex);
+            mutex.unlock();
             kid.endWaiting();
+            mutex.lock();
         }
-        //nbWaiting--;
         nbCurrentPeople++;
 
         mutex.unlock();
@@ -49,28 +48,16 @@ public:
     ///
     void leave(Kid &kid)
     {
-        // TODO
         mutex.lock();
-        //if (nbWaiting > 0) {
-
         if (nbCurrentPeople > 0) {
             cond.notifyOne();
             nbCurrentPeople--;
         }
-
-
-        //} else {
-        //    nbCurrentPeople--;
-        //}
-
-
         mutex.unlock();
     }
 
 private:
-    // TODO
     unsigned nbMaxPeople;
-    unsigned nbWaiting;
     unsigned nbCurrentPeople;
     PcoMutex mutex;
     PcoConditionVariable cond;

@@ -11,10 +11,7 @@ public:
     /// \param nbKidsToLeave Nombre d'enfants permettant de relâcher la moitié d'entre eux
     ///
     Playground(unsigned int nbKidsToLeave) : nbKidsWaiting(0),
-        nbKidsToLeave(nbKidsToLeave), nbKidsToFree(nbKidsToLeave / 2)
-    {
-        // TODO
-    }
+        nbKidsToLeave(nbKidsToLeave), nbKidsToFree(nbKidsToLeave / 2) {}
 
     ///
     /// \brief Fonction bloquante jusqu'à ce que le bon nombre d'enfants soit atteint
@@ -25,7 +22,6 @@ public:
     ///
     void play()
     {
-        // TODO
         monitorIn();
         nbKidsWaiting++;
         if (nbKidsWaiting == nbKidsToLeave) {
