@@ -25,17 +25,28 @@ public:
     ///
     void access(Kid &kid)
     {
+        bool hasAlreadyWait = false;
         mutex.lock();
         while (nbCurrentPeople == nbMaxPeople) {
-            mutex.unlock();
-            kid.startWaiting();
-            mutex.lock();
+            if (!hasAlreadyWait) {
+                mutex.unlock();
+                kid.startWaiting();
+                mutex.lock();
+            }
 
-            cond.wait(&mutex);
+            if (nbCurrentPeople == nbMaxPeople) {
+                cond.wait(&mutex);
+            }
+
+            hasAlreadyWait = true;
+        }
+
+        if (hasAlreadyWait) {
             mutex.unlock();
             kid.endWaiting();
             mutex.lock();
         }
+
         nbCurrentPeople++;
 
         mutex.unlock();

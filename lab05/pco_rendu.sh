@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PROJECT_DIR=code
+PROJECT_DIR2=code_long_function
 REPORT_FILE=rapport.pdf
 PROJECT_FILE=labo_toboggan.pro
 ARCHIVE=rendu.tar.gz
@@ -8,6 +9,12 @@ ARCHIVE=rendu.tar.gz
 if [ ! -d "$PROJECT_DIR" ]
 then
     echo "Could not find $PROJECT_DIR directory in $(pwd)" >&2
+    exit 1
+fi
+
+if [ ! -d "$PROJECT_DIR2" ]
+then
+    echo "Could not find $PROJECT_DIR2 directory in $(pwd)" >&2
     exit 1
 fi
 
@@ -24,5 +31,5 @@ then
 fi
 
 echo "The following files are archived in $ARCHIVE : "
-tar --exclude='rendu.tar.gz' --exclude='*.o' --exclude='*.user' -czvf $ARCHIVE code $REPORT_FILE
+tar --exclude='rendu.tar.gz' --exclude='*.o' --exclude='*.user' -czvf $ARCHIVE code code_long_function $REPORT_FILE
 

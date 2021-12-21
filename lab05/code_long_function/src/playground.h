@@ -14,8 +14,8 @@ public:
     /// \brief Constructeur
     /// \param nbKidsToLeave Nombre d'enfants permettant de relâcher la moitié d'entre eux
     ///
-    Playground(unsigned int nbKidsToLeave) : nbKidsWaiting(0),
-        nbKidsToLeave(nbKidsToLeave), nbKidsToFree(nbKidsToLeave / 2) {}
+    Playground(unsigned int nbKidsToLeave) : nbKidsWaiting(0), nbKidsToLeave(nbKidsToLeave),
+        nbKidsToFree(nbKidsToLeave / 2), nbKidsReleased(0) {}
 
     ///
     /// \brief Fonction bloquante jusqu'à ce que le bon nombre d'enfants soit atteint
@@ -33,6 +33,7 @@ public:
         nbKidsWaiting++;
         if (nbKidsWaiting == nbKidsToLeave) {
             nbKidsWaiting -= nbKidsToFree;
+            nbKidsReleased = nbKidsToFree;
             for (unsigned i = 0; i < nbKidsToFree; ++i)
                 signal(cond);
         }
@@ -40,7 +41,10 @@ public:
         monitorOut();
         kid.startWaiting();
         monitorIn();
-        wait(cond);
+        if (nbKidsReleased == 0) {
+            wait(cond);
+        }
+        nbKidsReleased--;
         monitorOut();
         kid.endWaiting();
     }
@@ -49,6 +53,8 @@ private:
     unsigned nbKidsWaiting;
     unsigned nbKidsToLeave;
     unsigned nbKidsToFree;
+
+    unsigned nbKidsReleased;
     Condition cond;
 };
 
