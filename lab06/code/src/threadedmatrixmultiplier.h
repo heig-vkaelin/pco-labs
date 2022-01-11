@@ -2,6 +2,7 @@
 #define THREADEDMATRIXMULTIPLIER_H
 
 #include <vector>
+#include <QList>
 
 #include <pcosynchro/pcoconditionvariable.h>
 #include <pcosynchro/pcohoaremonitor.h>
@@ -19,18 +20,67 @@
 template<class T>
 class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
 {
+    // Job structure
+    struct Job {
+        int id;
+        bool finished;
+        int size;
+        int rowIndex;
+        int colIndex;
+        SquareMatrix<T>& A;
+        SquareMatrix<T>& B;
+        SquareMatrix<T>* C;
+        PcoMutex* mutexWrite; // écrire dans C (méthode writeResult)
+    };
 
     /// As a suggestion, a buffer class that could be used to communicate between
     /// the workers and the main thread...
     ///
     /// Here we only wrote two potential methods, but there could be more at the end...
     ///
+    ///
     class Buffer
     {
+    private:
+        PcoMutex mutex;
+        PcoConditionVariable cond;
+        QList<Job> jobs;
     public:
-        void sendJob(/* Maybe some parameters */) {}
+        Buffer() : jobs() {}
 
-        void /* Maybe not void... */ getJob() {}
+        void sendJob(Job job  /* Maybe some parameters */) {
+            mutex.lock();
+            jobs.append(job);
+            cond.notifyOne();
+            mutex.unlock();
+        }
+
+        Job /* Maybe not void... */ getJob() {
+            Job job;
+            mutex.lock();
+            while (jobs.empty()) {
+                cond.wait(&mutex);
+            }
+            job = jobs.first();
+            jobs.removeFirst();
+            mutex.unlock();
+            return job;
+
+            // TODO: bouger ça de cette méthode
+            // Stockage du résultat intermédiaire
+            SquareMatrix<T> result(job.size);
+
+            // faire opérations sur result
+
+            // demander protection matrix C
+            // appliquer modif dans C
+
+        }
+
+        void writeResult(SquareMatrix<T> result, Job job) {
+            // Apply result in C matrix
+        }
+
     };
 
 public:
@@ -80,6 +130,13 @@ public:
     {
         // OK, computation is done correctly, but... Is it really multithreaded?!?
         // TODO : Get rid of the next lines and do something meaningful
+
+        int rowIndex = 0;
+        int colIndex = 0;
+
+        PcoMutex* writeMutex = new PcoMutex();
+        // TODO: appeller les sendJobs
+
         for (int i = 0; i < A.size(); i++) {
             for (int j = 0; j < A.size(); j++) {
                 for (int k = 0; k < A.size(); k++) {
@@ -92,6 +149,7 @@ public:
 protected:
     int m_nbThreads;
     int m_nbBlocksPerRow;
+    Buffer buffer;
 };
 
 
