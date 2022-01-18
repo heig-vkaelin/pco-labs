@@ -23,7 +23,7 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
 {
     // Job structure
     struct Job {
-        int id;
+        int id; // id de la multiplication
         bool finished;
         int size;
         int rowIndex;
@@ -56,7 +56,7 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             mutex.unlock();
         }
 
-        Job /* Maybe not void... */ getJob() {
+        Job/* Maybe not void... */ getJob() {
             Job job;
             mutex.lock();
             while (jobs.empty()) {
@@ -67,10 +67,6 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             mutex.unlock();
             return job;
 
-            // TODO: bouger ça de cette méthode
-            // Stockage du résultat intermédiaire
-            SquareMatrix<T> result(job.size);
-
             // faire opérations sur result
 
             // demander protection matrix C
@@ -78,8 +74,15 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
 
         }
 
-        void writeResult(SquareMatrix<T> result, Job job) {
+        void writeResult(SquareMatrix<T> result, Job &job) {
             // Apply result in C matrix
+            job.mutexWrite->lock();
+            for (int i = 0; i < job.size; i++) {
+                for (int j = 0; j < job.size; j++) {
+                    job.C->setElement(job.rowIndex + i, job.colIndex + j, result.element(i,j));
+                }
+            }
+            job.mutexWrite->unlock();
         }
 
     };
@@ -93,9 +96,32 @@ public:
     /// The threads shall be started from the constructor
     ///
     ThreadedMatrixMultiplier(int nbThreads, int nbBlocksPerRow = 0)
-        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow), counter(0)
+        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow), counter(0),threads()
     {
-        // TODO
+        for(int i = 0; i < nbThreads;++i){
+            threads.append((QSharedPointer<PcoThread>)new PcoThread(&ThreadedMatrixMultiplier::threadRun,this));
+        }
+
+    }
+
+    void threadRun(){
+        while (1) {
+
+            Job job = buffer.getJob();
+
+            // TODO: bouger ça de cette méthode
+            // Stockage du résultat intermédiaire
+            SquareMatrix<T> result(job.size);
+
+            for (int i = 0; i < job.size; i++) {
+                for (int j = 0; j < job.size; j++) {
+                    for (int k = 0; k < job.size; k++) {
+                        result.setElement(i, j, result.element(i, j) + job.A->element(job.rowIndex + k,job.colIndex +  j) * job.B->element(job.rowIndex + i, job.colIndex + k));
+                    }
+                }
+            }
+            buffer.writeResult(result,job);
+        }
     }
 
     ///
@@ -105,7 +131,15 @@ public:
     ///
     ~ThreadedMatrixMultiplier()
     {
-        // TODO
+        // TODO DELETE CORRECTEMENT LES THREADS
+        for(QSharedPointer<PcoThread> thread : threads){
+            thread->requestStop();
+            thread->join();
+        }
+        if(!threads.isEmpty()){
+            threads.clear();
+        }
+
     }
 
     ///
@@ -147,8 +181,8 @@ public:
                     .id = counter,
                     .finished = false,
                     .size = size,
-                    .rowIndex = i,
-                    .colIndex = j,
+                    .rowIndex = i*nbBlocksPerRow,
+                    .colIndex = j*nbBlocksPerRow,
                     .A = &A,
                     .B = &B,
                     .C = C,
@@ -159,13 +193,18 @@ public:
             }
         }
 
-        for (int i = 0; i < A.size(); i++) {
+
+
+
+
+
+        /*for (int i = 0; i < A.size(); i++) {
             for (int j = 0; j < A.size(); j++) {
                 for (int k = 0; k < A.size(); k++) {
                     C->setElement(i, j, C->element(i, j) + A.element(k, j) * B.element(i, k));
                 }
             }
-        }
+        }*/
     }
 
 protected:
@@ -174,6 +213,7 @@ protected:
     int counter;
     Buffer buffer;
     PcoMutex mutex;
+    QList<QSharedPointer<PcoThread>> threads;
 };
 
 
