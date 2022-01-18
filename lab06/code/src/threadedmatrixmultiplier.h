@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <QList>
+#include <QDebug>
 
 #include <pcosynchro/pcoconditionvariable.h>
 #include <pcosynchro/pcohoaremonitor.h>
@@ -27,8 +28,8 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         int size;
         int rowIndex;
         int colIndex;
-        SquareMatrix<T>& A;
-        SquareMatrix<T>& B;
+        SquareMatrix<T>* A;
+        SquareMatrix<T>* B;
         SquareMatrix<T>* C;
         PcoMutex* mutexWrite; // écrire dans C (méthode writeResult)
     };
@@ -92,7 +93,7 @@ public:
     /// The threads shall be started from the constructor
     ///
     ThreadedMatrixMultiplier(int nbThreads, int nbBlocksPerRow = 0)
-        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow)
+        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow), counter(0)
     {
         // TODO
     }
@@ -131,11 +132,32 @@ public:
         // OK, computation is done correctly, but... Is it really multithreaded?!?
         // TODO : Get rid of the next lines and do something meaningful
 
-        int rowIndex = 0;
-        int colIndex = 0;
+        // Permet de savoir à quelle matrice le job fait référence
+        mutex.lock();
+        counter++;
+        mutex.unlock();
 
         PcoMutex* writeMutex = new PcoMutex();
-        // TODO: appeller les sendJobs
+        int size = A.getSizeX() / nbBlocksPerRow;
+
+        // Appeller les sendJobs
+        for (int i = 0; i < nbBlocksPerRow; ++i) {
+            for (int j = 0; j < nbBlocksPerRow; ++j) {
+                Job job = {
+                    .id = counter,
+                    .finished = false,
+                    .size = size,
+                    .rowIndex = i,
+                    .colIndex = j,
+                    .A = &A,
+                    .B = &B,
+                    .C = C,
+                    .mutexWrite = writeMutex
+                };
+
+                buffer.sendJob(job);
+            }
+        }
 
         for (int i = 0; i < A.size(); i++) {
             for (int j = 0; j < A.size(); j++) {
@@ -149,7 +171,9 @@ public:
 protected:
     int m_nbThreads;
     int m_nbBlocksPerRow;
+    int counter;
     Buffer buffer;
+    PcoMutex mutex;
 };
 
 
