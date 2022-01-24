@@ -31,7 +31,6 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         SquareMatrix<T>* A;
         SquareMatrix<T>* B;
         SquareMatrix<T>* C;
-        PcoMutex* mutexWrite; // écrire dans C (méthode writeResult)
     };
 
     /// As a suggestion, a buffer class that could be used to communicate between
@@ -60,10 +59,15 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             Job job;
             mutex.lock();
             while (jobs.empty()) {
+                if(PcoThread::thisThread()->stopRequested()){
+                    break;
+                }
                 cond.wait(&mutex);
             }
-            job = jobs.first();
-            jobs.removeFirst();
+            if(jobs.size() >= 1){
+                job = jobs.first();
+                jobs.removeFirst();
+            }
             mutex.unlock();
             return job;
 
@@ -74,15 +78,28 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
 
         }
 
+        bool finished(int id) {
+            bool result = true;
+            mutex.lock();
+            for(Job& j : jobs)
+                if (j.id == id) {
+                    result = false;
+                    break;
+                }
+            mutex.unlock();
+            return result;
+        }
+        void freeAllThreads() {
+            cond.notifyAll();
+        }
+
         void writeResult(SquareMatrix<T> result, Job &job) {
             // Apply result in C matrix
-            job.mutexWrite->lock();
             for (int i = 0; i < job.size; i++) {
                 for (int j = 0; j < job.size; j++) {
                     job.C->setElement(job.rowIndex + i, job.colIndex + j, result.element(i,j));
                 }
             }
-            job.mutexWrite->unlock();
         }
 
     };
@@ -101,26 +118,32 @@ public:
         for(int i = 0; i < nbThreads;++i){
             threads.append((QSharedPointer<PcoThread>)new PcoThread(&ThreadedMatrixMultiplier::threadRun,this));
         }
-
     }
 
     void threadRun(){
-        while (1) {
+        while(1){
 
             Job job = buffer.getJob();
-
+            if(PcoThread::thisThread()->stopRequested())
+                return;
+            job.C->print();
             // TODO: bouger ça de cette méthode
             // Stockage du résultat intermédiaire
-            SquareMatrix<T> result(job.size);
-
             for (int i = 0; i < job.size; i++) {
                 for (int j = 0; j < job.size; j++) {
                     for (int k = 0; k < job.size; k++) {
-                        result.setElement(i, j, result.element(i, j) + job.A->element(job.rowIndex + k,job.colIndex +  j) * job.B->element(job.rowIndex + i, job.colIndex + k));
+                        job.C->setElement(i+job.rowIndex, j+job.colIndex, job.C->element(i+job.rowIndex, j+job.colIndex) + job.A->element(job.rowIndex + i,job.colIndex +  k) * job.B->element(job.rowIndex + k, job.colIndex + j));
+                        qDebug() << i + job.rowIndex << " / " << j+job.colIndex << " -/- " <<job.rowIndex + i << job.colIndex + k << " / " << job.rowIndex + k<< job.colIndex + j << " / " << job.id;
+
                     }
+                    qDebug() << "PDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD";
+
                 }
+                //C->setElement(i, j, C->element(i, j) + A.element(k, j) * B.element(i, k));
+
             }
-            buffer.writeResult(result,job);
+            job.C->print();
+
         }
     }
 
@@ -132,13 +155,13 @@ public:
     ~ThreadedMatrixMultiplier()
     {
         // TODO DELETE CORRECTEMENT LES THREADS
-        for(QSharedPointer<PcoThread> thread : threads){
+        /*for(QSharedPointer<PcoThread> thread : threads){
             thread->requestStop();
             thread->join();
         }
         if(!threads.isEmpty()){
             threads.clear();
-        }
+        }*/
 
     }
 
@@ -171,7 +194,6 @@ public:
         counter++;
         mutex.unlock();
 
-        PcoMutex* writeMutex = new PcoMutex();
         int size = A.getSizeX() / nbBlocksPerRow;
 
         // Appeller les sendJobs
@@ -181,19 +203,27 @@ public:
                     .id = counter,
                     .finished = false,
                     .size = size,
-                    .rowIndex = i*nbBlocksPerRow,
-                    .colIndex = j*nbBlocksPerRow,
+                    .rowIndex = i*size,
+                    .colIndex = j*size,
                     .A = &A,
                     .B = &B,
                     .C = C,
-                    .mutexWrite = writeMutex
                 };
 
                 buffer.sendJob(job);
             }
         }
+        while(!buffer.finished(1)){
 
+        }
 
+        for(QSharedPointer<PcoThread> &thread : threads){
+            thread->requestStop();
+        }
+        buffer.freeAllThreads();
+        for(QSharedPointer<PcoThread> &thread : threads){
+            thread->join();
+        }
 
 
 
