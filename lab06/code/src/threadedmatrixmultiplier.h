@@ -121,27 +121,33 @@ public:
     }
 
     void threadRun(){
-        while(1){
-
+        while(1) {
             Job job = buffer.getJob();
             if(PcoThread::thisThread()->stopRequested())
                 return;
             job.C->print();
             // TODO: bouger ça de cette méthode
-            // Stockage du résultat intermédiaire
             for (int i = 0; i < job.size; i++) {
                 for (int j = 0; j < job.size; j++) {
-                    for (int k = 0; k < job.size; k++) {
+                    for (int k = 0; k < job.A->size(); k++) {
                         job.C->setElement(i+job.rowIndex, j+job.colIndex, job.C->element(i+job.rowIndex, j+job.colIndex) + job.A->element(job.rowIndex + i,job.colIndex +  k) * job.B->element(job.rowIndex + k, job.colIndex + j));
                         qDebug() << i + job.rowIndex << " / " << j+job.colIndex << " -/- " <<job.rowIndex + i << job.colIndex + k << " / " << job.rowIndex + k<< job.colIndex + j << " / " << job.id;
 
                     }
-                    qDebug() << "PDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD";
+                    qDebug() << "-----------------------------------------------";
 
                 }
                 //C->setElement(i, j, C->element(i, j) + A.element(k, j) * B.element(i, k));
 
             }
+
+            /*for (int i = 0; i < job.size; i++) {
+                for (int j = 0; j < job.size; j++) {
+                    for (int k = 0; k < job.A.size(); k++) {
+                        job.C->setElement(i+job.rowIndex, j+job.colIndex, job.C->element(i+job.rowIndex, j+job.colIndex) + A.element(k, j) * B.element(i, k));
+                    }
+                }
+            }*/
             job.C->print();
 
         }
@@ -190,8 +196,9 @@ public:
         // TODO : Get rid of the next lines and do something meaningful
 
         // Permet de savoir à quelle matrice le job fait référence
+        int id;
         mutex.lock();
-        counter++;
+        id = ++counter;
         mutex.unlock();
 
         int size = A.getSizeX() / nbBlocksPerRow;
@@ -200,7 +207,7 @@ public:
         for (int i = 0; i < nbBlocksPerRow; ++i) {
             for (int j = 0; j < nbBlocksPerRow; ++j) {
                 Job job = {
-                    .id = counter,
+                    .id = id,
                     .finished = false,
                     .size = size,
                     .rowIndex = i*size,
@@ -213,9 +220,7 @@ public:
                 buffer.sendJob(job);
             }
         }
-        while(!buffer.finished(1)){
-
-        }
+        while (!buffer.finished(id)){}
 
         for(QSharedPointer<PcoThread> &thread : threads){
             thread->requestStop();
