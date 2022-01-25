@@ -59,23 +59,17 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             Job job;
             mutex.lock();
             while (jobs.empty()) {
-                if(PcoThread::thisThread()->stopRequested()){
+                if(PcoThread::thisThread()->stopRequested()) {
                     break;
                 }
                 cond.wait(&mutex);
             }
-            if(jobs.size() >= 1){
+            if (jobs.size() >= 1) {
                 job = jobs.first();
                 jobs.removeFirst();
             }
             mutex.unlock();
             return job;
-
-            // faire opérations sur result
-
-            // demander protection matrix C
-            // appliquer modif dans C
-
         }
 
         bool finished(int id) {
@@ -89,19 +83,10 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             mutex.unlock();
             return result;
         }
+
         void freeAllThreads() {
             cond.notifyAll();
         }
-
-        void writeResult(SquareMatrix<T> result, Job &job) {
-            // Apply result in C matrix
-            for (int i = 0; i < job.size; i++) {
-                for (int j = 0; j < job.size; j++) {
-                    job.C->setElement(job.rowIndex + i, job.colIndex + j, result.element(i,j));
-                }
-            }
-        }
-
     };
 
 public:
@@ -113,17 +98,17 @@ public:
     /// The threads shall be started from the constructor
     ///
     ThreadedMatrixMultiplier(int nbThreads, int nbBlocksPerRow = 0)
-        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow), counter(0),threads()
+        : m_nbThreads(nbThreads), m_nbBlocksPerRow(nbBlocksPerRow), counter(0), threads()
     {
-        for(int i = 0; i < nbThreads;++i){
-            threads.append((QSharedPointer<PcoThread>)new PcoThread(&ThreadedMatrixMultiplier::threadRun,this));
+        for (int i = 0; i < nbThreads;++i) {
+            threads.append((QSharedPointer<PcoThread>)new PcoThread(&ThreadedMatrixMultiplier::threadRun, this));
         }
     }
 
     void threadRun(){
         while(1) {
             Job job = buffer.getJob();
-            if(PcoThread::thisThread()->stopRequested())
+            if (PcoThread::thisThread()->stopRequested())
                 return;
             job.C->print();
             // TODO: bouger ça de cette méthode
@@ -220,13 +205,13 @@ public:
                 buffer.sendJob(job);
             }
         }
-        while (!buffer.finished(id)){}
+        while (!buffer.finished(id)) {}
 
-        for(QSharedPointer<PcoThread> &thread : threads){
+        for (QSharedPointer<PcoThread> &thread : threads) {
             thread->requestStop();
         }
         buffer.freeAllThreads();
-        for(QSharedPointer<PcoThread> &thread : threads){
+        for (QSharedPointer<PcoThread> &thread : threads) {
             thread->join();
         }
 
