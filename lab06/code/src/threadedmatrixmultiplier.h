@@ -45,8 +45,17 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         PcoMutex mutex;
         PcoConditionVariable cond;
         QList<Job> jobs;
+        QMap<int, int> nbJobsFinished;
+        QMap<int, QSharedPointer<PcoConditionVariable>> waitingMasters;
     public:
-        Buffer() : jobs() {}
+        Buffer() : jobs(), nbJobsFinished(), waitingMasters() {}
+
+        ~Buffer()
+        {
+            if (!waitingMasters.isEmpty()) {
+                waitingMasters.clear(); // Supprime directement les allocations créées
+            }
+        }
 
         /**
          * Ajoute un Job dans la liste des jobs à réaliser
@@ -55,6 +64,11 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         void sendJob(Job job  /* Maybe some parameters */) {
             mutex.lock();
             jobs.append(job);
+            if (!nbJobsFinished.contains(job.id))
+                nbJobsFinished.insert(job.id, 0);
+
+            if (!waitingMasters.contains(job.id))
+                waitingMasters.insert(job.id, (QSharedPointer<PcoConditionVariable>)new PcoConditionVariable());
             cond.notifyOne();
             mutex.unlock();
         }
@@ -88,16 +102,27 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
          * @param id du calcul de la matrice à vérifier
          * @return true si le calcul est terminé, false sinon
          */
-        bool finished(int id) {
-            bool result = true;
+        void waitJobsFinished(int id, int nbTotalJobs) {
             mutex.lock();
-            for(Job& j : jobs)
-                if (j.id == id) {
-                    result = false;
-                    break;
-                }
+            while (nbTotalJobs != nbJobsFinished[id]) {
+                waitingMasters[id]->wait(&mutex);
+            }
             mutex.unlock();
-            return result;
+        }
+
+        void finishedJob(int id) {
+            mutex.lock();
+            nbJobsFinished[id]++;
+            waitingMasters[id]->notifyOne();
+            mutex.unlock();
+        }
+
+        int getNbJobsFinished(int id) {
+            int nb;
+            mutex.lock();
+            nb = nbJobsFinished[id];
+            mutex.unlock();
+            return nb;
         }
 
         /**
@@ -124,43 +149,25 @@ public:
         }
     }
 
-    void threadRun(){
+    void threadRun() {
         while (1) {
             Job job = buffer.getJob();
             // Si le thread doit être arrêté, il sort de la boucle
             if (PcoThread::thisThread()->stopRequested())
                 return;
 
-            job.C->print();
-            // TODO: bouger ça de cette méthode
-
-            // Multiplication de la sous matrice
+            // Multiplication des index attribués au Job
             for (int i = 0; i < job.size; i++) {
                 for (int j = 0; j < job.size; j++) {
                     for (int k = 0; k < job.A->size(); k++) {
-                        job.C->setElement(i + job.rowIndex, j + job.colIndex,
-                                          job.C->element(i + job.rowIndex, j + job.colIndex) +
-                                          job.A->element(job.rowIndex + i, job.colIndex +  k) *
-                                          job.B->element(job.rowIndex + k, job.colIndex + j));
-                        qDebug() << i + job.rowIndex << " / " << j+job.colIndex << " -/- " <<job.rowIndex + i << job.colIndex + k << " / " << job.rowIndex + k<< job.colIndex + j << " / " << job.id;
-
+                        job.C->setElement(j + job.colIndex, i + job.rowIndex,
+                                          job.C->element(j + job.colIndex, i + job.rowIndex) +
+                                          job.A->element(k, job.rowIndex + i) *
+                                          job.B->element(job.colIndex + j, k));
                     }
-                    qDebug() << "-----------------------------------------------";
-
                 }
-                //C->setElement(i, j, C->element(i, j) + A.element(k, j) * B.element(i, k));
-
             }
-
-            /*for (int i = 0; i < job.size; i++) {
-                for (int j = 0; j < job.size; j++) {
-                    for (int k = 0; k < job.A.size(); k++) {
-                        job.C->setElement(i+job.rowIndex, j+job.colIndex, job.C->element(i+job.rowIndex, j+job.colIndex) + A.element(k, j) * B.element(i, k));
-                    }
-                }
-            }*/
-            job.C->print();
-
+            buffer.finishedJob(job.id);
         }
     }
 
@@ -171,15 +178,17 @@ public:
     ///
     ~ThreadedMatrixMultiplier()
     {
-        // TODO DELETE CORRECTEMENT LES THREADS
-        /*for(QSharedPointer<PcoThread> thread : threads){
+        for (QSharedPointer<PcoThread> &thread : threads) {
             thread->requestStop();
+        }
+        buffer.freeAllThreads();
+        for (QSharedPointer<PcoThread> &thread : threads) {
             thread->join();
         }
-        if(!threads.isEmpty()){
-            threads.clear();
-        }*/
 
+        if (!threads.isEmpty()){
+            threads.clear(); // Supprime directement les allocations créées
+        }
     }
 
     ///
@@ -203,16 +212,14 @@ public:
     /// Executes the multithreaded computation, by decomposing the matrices into blocks.
     void multiply(SquareMatrix<T>& A, SquareMatrix<T>& B, SquareMatrix<T>* C, int nbBlocksPerRow)
     {
-        // OK, computation is done correctly, but... Is it really multithreaded?!?
-        // TODO : Get rid of the next lines and do something meaningful
-
-        // Permet de savoir à quelle matrice le job fait référence
+        // Permet de savoir à quelle matrice le Job fait référence
         int id;
         mutex.lock();
         id = ++counter;
         mutex.unlock();
 
         int size = A.getSizeX() / nbBlocksPerRow;
+        int nbJobs = nbBlocksPerRow * nbBlocksPerRow;
 
         // Crée les différents jobs
         for (int i = 0; i < nbBlocksPerRow; ++i) {
@@ -232,17 +239,7 @@ public:
             }
         }
         // Attend que le calcul de la matrice soit terminé par les différents threads
-        while (!buffer.finished(id)) {}
-
-        // TODO: request stop seulement les threads du multiply en cours ??
-        for (QSharedPointer<PcoThread> &thread : threads) {
-            thread->requestStop();
-        }
-        buffer.freeAllThreads();
-        for (QSharedPointer<PcoThread> &thread : threads) {
-            thread->join();
-        }
-
+        buffer.waitJobsFinished(id, nbJobs);
 
         /*for (int i = 0; i < A.size(); i++) {
             for (int j = 0; j < A.size(); j++) {
