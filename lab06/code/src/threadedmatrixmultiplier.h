@@ -21,7 +21,7 @@
 template<class T>
 class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
 {
-    // Job structure
+    // Structure d'un Job
     struct Job {
         int id; // id de la multiplication
         bool finished;
@@ -48,6 +48,10 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
     public:
         Buffer() : jobs() {}
 
+        /**
+         * Ajoute un Job dans la liste des jobs à réaliser
+         * @param job : Job à réaliser
+         */
         void sendJob(Job job  /* Maybe some parameters */) {
             mutex.lock();
             jobs.append(job);
@@ -55,11 +59,17 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             mutex.unlock();
         }
 
+        /**
+         * Retourne le Job le plus ancien et le supprime de la liste des jobs
+         * à réaliser. Si aucun Job n'est disponible, la fonction bloque en
+         * attendant un nouveau Job.
+         * @return le Job à réaliser
+         */
         Job/* Maybe not void... */ getJob() {
             Job job;
             mutex.lock();
             while (jobs.empty()) {
-                if(PcoThread::thisThread()->stopRequested()) {
+                if (PcoThread::thisThread()->stopRequested()) {
                     break;
                 }
                 cond.wait(&mutex);
@@ -72,6 +82,12 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             return job;
         }
 
+        /**
+         * Vérifie que tous les jobs d'une multiplication de matrice
+         * sont terminés.
+         * @param id du calcul de la matrice à vérifier
+         * @return true si le calcul est terminé, false sinon
+         */
         bool finished(int id) {
             bool result = true;
             mutex.lock();
@@ -84,6 +100,9 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
             return result;
         }
 
+        /**
+         * Libère tous les threads bloqués en attente d'un Job
+         */
         void freeAllThreads() {
             cond.notifyAll();
         }
@@ -106,16 +125,23 @@ public:
     }
 
     void threadRun(){
-        while(1) {
+        while (1) {
             Job job = buffer.getJob();
+            // Si le thread doit être arrêté, il sort de la boucle
             if (PcoThread::thisThread()->stopRequested())
                 return;
+
             job.C->print();
             // TODO: bouger ça de cette méthode
+
+            // Multiplication de la sous matrice
             for (int i = 0; i < job.size; i++) {
                 for (int j = 0; j < job.size; j++) {
                     for (int k = 0; k < job.A->size(); k++) {
-                        job.C->setElement(i+job.rowIndex, j+job.colIndex, job.C->element(i+job.rowIndex, j+job.colIndex) + job.A->element(job.rowIndex + i,job.colIndex +  k) * job.B->element(job.rowIndex + k, job.colIndex + j));
+                        job.C->setElement(i + job.rowIndex, j + job.colIndex,
+                                          job.C->element(i + job.rowIndex, j + job.colIndex) +
+                                          job.A->element(job.rowIndex + i, job.colIndex +  k) *
+                                          job.B->element(job.rowIndex + k, job.colIndex + j));
                         qDebug() << i + job.rowIndex << " / " << j+job.colIndex << " -/- " <<job.rowIndex + i << job.colIndex + k << " / " << job.rowIndex + k<< job.colIndex + j << " / " << job.id;
 
                     }
@@ -188,15 +214,15 @@ public:
 
         int size = A.getSizeX() / nbBlocksPerRow;
 
-        // Appeller les sendJobs
+        // Crée les différents jobs
         for (int i = 0; i < nbBlocksPerRow; ++i) {
             for (int j = 0; j < nbBlocksPerRow; ++j) {
                 Job job = {
                     .id = id,
                     .finished = false,
                     .size = size,
-                    .rowIndex = i*size,
-                    .colIndex = j*size,
+                    .rowIndex = i * size,
+                    .colIndex = j * size,
                     .A = &A,
                     .B = &B,
                     .C = C,
@@ -205,8 +231,10 @@ public:
                 buffer.sendJob(job);
             }
         }
+        // Attend que le calcul de la matrice soit terminé par les différents threads
         while (!buffer.finished(id)) {}
 
+        // TODO: request stop seulement les threads du multiply en cours ??
         for (QSharedPointer<PcoThread> &thread : threads) {
             thread->requestStop();
         }
@@ -214,8 +242,6 @@ public:
         for (QSharedPointer<PcoThread> &thread : threads) {
             thread->join();
         }
-
-
 
 
         /*for (int i = 0; i < A.size(); i++) {
