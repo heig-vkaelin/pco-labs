@@ -3,36 +3,8 @@
 
 /*
 Auteurs: Alexandre Jaquier, Valentin Kaelin
-
-Remarques générales:
-- Nous avons essayé d'utiliser uniquement des containers venant du framework Qt
-  afin d'avoir l'occasion de les utiliser une fois. Cela nous a permis d'utiliser
-  la classe QSharedPointer qui nous facilite, entre autre, la récupération de
-  la mémoire allouée (à la façon des unique_ptr en C++ natif).
-
-Description de l'implémentation:
-- 1ère étape:
-Le constructeur de la classe ThreadedMatrixMultiplier va initialiser la liste de pointeurs
-sur des threads. Chaque thread effectue la fonction threadRun() qui contient une boucle
-infinie. Chaque thread va attendre qu'on Job soit disponible grâce au Buffer, implémenté
-via au moniteur de Mesa.
-
-- 2ème étape:
-L'appel à la fonction multiply() permet d'initialiser un nouveau calcul matriciel. Afin de
-répartir la charge sur les différents threads, la fonction partage les matrices en blocs en
-créant plusieurs instances de la structure Job. Chaque instance sait sur quelle partie de la
-matrice finale travailler grâce aux index stockés. Ces différents Jobs sont ajoutés à la
-liste des Jobs disponibles du Buffer. Pour finir, la fonction multiply() attend la fin du
-calcul complet en bloquant sur la fonction du Buffer waitJobsFinished(). Nous avons
-implémenté cette attente via un moniteur de Mesa afin d'éviter une attente active du thread
-principal.
-
-- 3ème étape:
-Une fois les Jobs créés, les threads workers ne bloquent plus dans la fonction getJob() et
-peuvent commencer à appliquer la multiplication.
-
-Vérification du fonctionnement:
-
+Date: 29.01.2022
+Description: Version multi-thread de la multiplication matricielle
 */
 
 #include <QList>

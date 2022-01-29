@@ -1,6 +1,13 @@
 #ifndef MULTIPLIERTESTER_H
 #define MULTIPLIERTESTER_H
 
+/*
+Auteurs: Alexandre Jaquier, Valentin Kaelin
+Date: 29.01.2022
+Description: Ajout d'une fonction permettant de limiter les valeurs
+             générées dans les matrices
+*/
+
 #include <chrono>
 #include <iostream>
 
@@ -21,7 +28,23 @@ class MultiplierTester
 public:
     MultiplierTester() {}
 
-    void test(int matrixSize, int nbThreads, int nbBlocksPerRow)
+    /**
+     * Fonction de test déjà présente, n'a pas de limite de valeur maximale
+     */
+    void test(int matrixSize, int nbThreads, int nbBlocksPerRow) {
+        return test_values_limited(matrixSize, nbThreads, nbBlocksPerRow, RAND_MAX);
+    }
+
+    /**
+     * Fonction de test permettant de donner une limite maximale aux
+     * valeurs aléatoires de la matrice.
+     *
+     * @param matrixSize
+     * @param nbThreads
+     * @param nbBlocksPerRow
+     * @param maxValue : valeur maximale des valeurs générées dans la matrice
+     */
+    void test_values_limited(int matrixSize, int nbThreads, int nbBlocksPerRow, int maxValue)
     {
         using T = decltype(ThreadedMultiplierType::getElementType());
 
@@ -32,8 +55,8 @@ public:
 
         for (int i = 0; i < matrixSize; i++) {
             for (int j = 0; j < matrixSize; j++) {
-                A.setElement(i, j, rand());
-                B.setElement(i, j, rand());
+                A.setElement(i, j, rand() % maxValue);
+                B.setElement(i, j, rand() % maxValue);
                 C.setElement(i, j, 0);
                 C_ref.setElement(i, j, 0);
             }

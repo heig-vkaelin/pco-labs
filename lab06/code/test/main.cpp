@@ -1,3 +1,9 @@
+/*
+Auteurs: Alexandre Jaquier, Valentin Kaelin
+Date: 29.01.2022
+Description: Ajouts de quelques tests
+*/
+
 #include <future>
 
 #include <gtest/gtest.h>
@@ -11,6 +17,27 @@
 
 // Decommenting the next line allows to check for interlocking
 #define CHECK_DURATION
+
+// Test sur une petite matrice avec des valeurs dans les matrices très petites
+TEST(Multiplier, TestSmallValues){
+
+#ifdef CHECK_DURATION
+        ASSERT_DURATION_LE(30, ({
+#endif // CHECK_DURATION
+                               constexpr int MATRIXSIZE = 4;
+                               constexpr int NBTHREADS = 1;
+                               constexpr int NBBLOCKSPERROW = 2;
+                               constexpr int MAX_VALUE = 10;
+
+                               MultiplierTester<ThreadedMultiplierType> tester;
+
+                               tester.test_values_limited(MATRIXSIZE, NBTHREADS, NBBLOCKSPERROW, MAX_VALUE);
+
+#ifdef CHECK_DURATION
+                           }))
+#endif // CHECK_DURATION
+
+}
 
 TEST(Multiplier, SingleThread){
 
