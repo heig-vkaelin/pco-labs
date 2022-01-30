@@ -39,6 +39,17 @@ TEST(Multiplier, TestSmallValues){
 
 }
 
+// Test sur une grande matrice
+TEST(Multiplier, TestBigValues){
+                               constexpr int MATRIXSIZE = 1000;
+                               constexpr int NBTHREADS = 4;
+                               constexpr int NBBLOCKSPERROW = 20;
+
+                               MultiplierTester<ThreadedMultiplierType> tester;
+
+                               tester.test(MATRIXSIZE, NBTHREADS, NBBLOCKSPERROW);
+}
+
 TEST(Multiplier, SingleThread){
 
 #ifdef CHECK_DURATION
