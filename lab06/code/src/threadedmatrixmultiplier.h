@@ -134,7 +134,7 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         void finishedJob(int id, int nbTotalJobs) {
             mutex.lock();
             // Si tous les jobs sont terminés, le thread principal est notifié
-            if(++nbJobsFinished[id] == nbTotalJobs)
+            if (++nbJobsFinished[id] == nbTotalJobs)
                 waitingMasters[id]->notifyOne();
             mutex.unlock();
         }
