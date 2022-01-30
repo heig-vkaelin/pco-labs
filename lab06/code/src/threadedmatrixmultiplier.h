@@ -44,14 +44,14 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
     class Buffer
     {
     private:
-        //Mutex gérant la gestion de l'envoi et la réception de job
+        // Mutex gérant la gestion de l'envoi et la réception de job
         PcoMutex mutex;
-        //Condition gérant la gestion de l'envoi et la réception de job
+        // Condition gérant la gestion de l'envoi et la réception de job
         PcoConditionVariable cond;
         QList<Job> jobs;
-        //Map stockant pour chaque multiplication le nombre de jobs fini
+        // Map stockant pour chaque multiplication le nombre de jobs fini
         QMap<int, int> nbJobsFinished;
-        //Map stockant pour chaque multiplication la condition permettant de stopper le thread principal
+        // Map stockant pour chaque multiplication la condition permettant de stopper le thread principal
         QMap<int, QSharedPointer<PcoConditionVariable>> waitingMasters;
     public:
         Buffer() : jobs(), nbJobsFinished(), waitingMasters() {}
@@ -129,10 +129,11 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
         /**
          * Annonce au buffer qu'un thread a terminé un Job
          * @param id du calcul de la matrice
+         * @param nbTotalJobs nombre de Jobs total à réaliser pour la multiplication de matrices
          */
         void finishedJob(int id, int nbTotalJobs) {
             mutex.lock();
-            // Si tous les jobs ont été terminés le thread principal sera notifier
+            // Si tous les jobs sont terminés, le thread principal est notifié
             if(++nbJobsFinished[id] == nbTotalJobs)
                 waitingMasters[id]->notifyOne();
             mutex.unlock();
@@ -190,7 +191,7 @@ public:
             }
 
             // Annonce que le Job est terminé
-            buffer.finishedJob(job.id,job.nbTotalJobs);
+            buffer.finishedJob(job.id, job.nbTotalJobs);
         }
     }
 
@@ -238,7 +239,7 @@ public:
     /// Executes the multithreaded computation, by decomposing the matrices into blocks.
     void multiply(SquareMatrix<T>& A, SquareMatrix<T>& B, SquareMatrix<T>* C, int nbBlocksPerRow)
     {
-        // Permet de savoir à quelle matrice le Job fait référence
+        // Permet de savoir à quel calcul matriciel le Job fait référence
         int id;
         counterMutex.lock();
         id = counter++;
@@ -263,8 +264,8 @@ public:
         // Crée les différents jobs
         for (int i = 0; i < nbBlocksPerRow; ++i) {
             for (int j = 0; j < nbBlocksPerRow; ++j) {
-                job.rowIndex = i*size;
-                job.colIndex = j*size;
+                job.rowIndex = i * size;
+                job.colIndex = j * size;
                 buffer.sendJob(job);
             }
         }
@@ -276,9 +277,9 @@ public:
 protected:
     int m_nbThreads;
     int m_nbBlocksPerRow;
-    int counter; // compte le nombre de calculs de matrices différents sont réalisés
+    int counter; // permet de générer un identifiant unique pour chaque calcul matriciel
     Buffer buffer;
-    PcoMutex counterMutex;
+    PcoMutex counterMutex; // permet de protéger la variable counter
     QList<QSharedPointer<PcoThread>> threads;
 };
 
