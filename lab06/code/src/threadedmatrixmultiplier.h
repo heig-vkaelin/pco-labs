@@ -31,6 +31,7 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
     struct Job {
         int id; // id de la multiplication
         int size; // taille du bloc à traiter
+        int nbTotalJobs; // nombre de jobs pour la multiplication
         int rowIndex, colIndex;
         SquareMatrix<T> *A, *B, *C;
     };
@@ -43,10 +44,14 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
     class Buffer
     {
     private:
+        //Mutex gérant la gestion de l'envoi et la réception de job
         PcoMutex mutex;
+        //Condition gérant la gestion de l'envoi et la réception de job
         PcoConditionVariable cond;
         QList<Job> jobs;
+        //Map stockant pour chaque multiplication le nombre de jobs fini
         QMap<int, int> nbJobsFinished;
+        //Map stockant pour chaque multiplication la condition permettant de stopper le thread principal
         QMap<int, QSharedPointer<PcoConditionVariable>> waitingMasters;
     public:
         Buffer() : jobs(), nbJobsFinished(), waitingMasters() {}
@@ -125,12 +130,11 @@ class ThreadedMatrixMultiplier : public AbstractMatrixMultiplier<T>
          * Annonce au buffer qu'un thread a terminé un Job
          * @param id du calcul de la matrice
          */
-        void finishedJob(int id) {
+        void finishedJob(int id, int nbTotalJobs) {
             mutex.lock();
-            nbJobsFinished[id]++;
-            // Notification du thread principal qui va re-vérifier si le calcul entier
-            // est terminé
-            waitingMasters[id]->notifyOne();
+            // Si tous les jobs ont été terminés le thread principal sera notifier
+            if(++nbJobsFinished[id] == nbTotalJobs)
+                waitingMasters[id]->notifyOne();
             mutex.unlock();
         }
 
@@ -186,7 +190,7 @@ public:
             }
 
             // Annonce que le Job est terminé
-            buffer.finishedJob(job.id);
+            buffer.finishedJob(job.id,job.nbTotalJobs);
         }
     }
 
@@ -245,19 +249,22 @@ public:
         int size = A.getSizeX() / nbBlocksPerRow;
         int nbTotalJobs = nbBlocksPerRow * nbBlocksPerRow;
 
+        Job job = {
+            .id = id,
+            .size = size,
+            .nbTotalJobs = nbTotalJobs,
+            .rowIndex = 0,
+            .colIndex = 0,
+            .A = &A,
+            .B = &B,
+            .C = C,
+        };
+
         // Crée les différents jobs
         for (int i = 0; i < nbBlocksPerRow; ++i) {
             for (int j = 0; j < nbBlocksPerRow; ++j) {
-                Job job = {
-                    .id = id,
-                    .size = size,
-                    .rowIndex = i * size,
-                    .colIndex = j * size,
-                    .A = &A,
-                    .B = &B,
-                    .C = C,
-                };
-
+                job.rowIndex = i*size;
+                job.colIndex = j*size;
                 buffer.sendJob(job);
             }
         }
